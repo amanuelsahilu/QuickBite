@@ -70,8 +70,8 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 3, seq: 0,
-      clock: { mode: 'demo', day: 0, min: 10 * 60 + 20 },
+      demo: true, version: 4, seq: 0,
+      clock: { mode: 'demo', day: 0, min: 11 * 60 + 30 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
         timing: { eatBufferMin: 10, orderLeadMin: 2, runningLateBufferMin: 3, status: 'demo value — awaiting approval' },
@@ -121,8 +121,8 @@ function createCore(store) {
       schedules: {
         s1: [
           { id: 'c1', day: 0, name: 'Business Statistics', start: '08:30', end: '10:00', building: 'bus' },
-          { id: 'c2', day: 0, name: 'Marketing Principles', start: '10:45', end: '12:15', building: 'eng' },
-          { id: 'c3', day: 0, name: 'Academic Writing', start: '13:00', end: '14:15', building: 'lib' },
+          { id: 'c2', day: 0, name: 'BUS 2403', start: '12:00', end: '13:30', building: 'bus' },
+          { id: 'c3', day: 0, name: 'Academic Writing', start: '14:00', end: '15:15', building: 'lib' },
           { id: 'c4', day: 1, name: 'Accounting I', start: '09:00', end: '10:30', building: 'bus' },
           { id: 'c5', day: 1, name: 'IT Fundamentals', start: '11:00', end: '12:30', building: 'eng' },
           { id: 'c6', day: 2, name: 'Business Statistics', start: '08:30', end: '10:00', building: 'bus' },
@@ -196,7 +196,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 3) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 4) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

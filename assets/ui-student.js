@@ -7,20 +7,21 @@ function diningLine(r) {
   return '<span class="small muted">' + esc(r.outlet.name) + ' · ' + aed(r.item.price) + ' · ready ~' + r.ready + ' min</span>';
 }
 function breakTimeline(r, avail) {
-  const cfg = C.S.config.timing; const walkTo = C.walk(r.from || 'stc', r.outlet.building);
-  const parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Queue + prep', Math.max(r.queue.wait + r.item.prep, walkTo), '#0d9488'], ['Eat', r.eat, '#16a34a'], ['Walk to class', r.walkBack, '#0f2a43']];
-  const total = Math.max(avail || 0, parts.reduce((a, p) => a + p[1], 0));
-  const spare = (avail || 0) - parts.reduce((a, p) => a + p[1], 0);
-  return '<div class="tl" role="img" aria-label="Break plan timeline">' + parts.filter(p => p[1] > 0).map(p => '<span style="flex:' + p[1] + ';background:' + p[2] + '">' + p[1] + 'm</span>').join('') + (spare > 0 ? '<span style="flex:' + spare + ';background:#cbd5e1;color:#0f2a43">' + spare + 'm spare</span>' : '') + '</div>' +
+  const cfg = C.S.config.timing;
+  // [label, minutes, colour, bar width]; pick up is drawn the same width as order to show how quick it is
+  const parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', 3, '#0d9488', cfg.orderLeadMin], ['Eat', r.eat, '#16a34a']];
+  const used = parts.reduce((a, p) => a + p[1], 0);
+  parts.push(['Rest', Math.max(0, (avail || 0) - used), '#0f2a43']);
+  return '<div class="tl" role="img" aria-label="Break plan timeline">' + parts.filter(p => p[1] > 0).map(p => '<span style="flex:' + (p[3] || p[1]) + ';background:' + p[2] + '">' + p[1] + 'm</span>').join('') + '</div>' +
     '<div class="tlk">' + parts.map(p => '<span><i style="background:' + p[2] + '"></i>' + p[0] + '</span>').join('') + '</div>';
 }
-function recCard(sf, r, rec, big) {
+function recCard(sf, r, rec, big, plain) {
   const it = r.item; const walkBack = C.walk(r.outlet.building, rec.break.to || r.outlet.building);
   r.walkBack = walkBack; r.eat = rec.sort && sf.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
   return '<div class="card' + (big ? ' hero' : '') + '"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
     '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + r.ready + ' min</div>' +
     '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
-    (r.reasons.length ? '<div class="small">' + r.reasons.map(x => '✓ ' + esc(x)).join('<br>') + '</div>' : '') + '</div></div>' +
+    (r.reasons.length && !plain ? '<div class="small">' + r.reasons.map(x => '✓ ' + esc(x)).join('<br>') + '</div>' : '') + '</div></div>' +
     (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail) + '</div>' : '') +
     '<div class="row" style="margin-top:12px"><button class="btn p" data-a="add" data-id="' + it.id + '">Add to cart</button><button class="btn" data-a="fit" data-id="' + it.id + '">View schedule fit</button><button class="btn" data-a="go" data-r="outlet" data-id="' + r.outlet.id + '">Menu</button></div></div>';
 }
@@ -37,12 +38,12 @@ const STU_VIEWS = {
     else nextTxt = esc(br.reason) + (br.reason === 'No schedule saved yet' ? ' — <button class="btn sm" data-a="go" data-r="schedule">Add your classes</button>' : '');
     const notes = C.notifications(sf.user).slice(0, 4);
     return '<h1>' + greet + ', ' + esc(u.name) + '</h1><p class="muted">' + nextTxt + '</p>' +
-      '<div class="grid g4 kp" style="margin:14px 0"><div class="card kpi"><div class="l">Break time left</div><div class="v num">' + (rec.avail != null ? rec.avail + ' min' : '—') + '</div><div class="small muted">' + (br.next ? 'until ' + br.next.start : 'no class pending') + '</div></div>' +
+      '<div class="grid g4 kp kp3" style="margin:14px 0"><div class="card kpi"><div class="l">Break time left</div><div class="v num">' + (rec.avail != null ? rec.avail + ' min' : '—') + '</div><div class="small muted">' + (br.next ? 'until ' + br.next.start : 'no class pending') + '</div></div>' +
       '<div class="card kpi"><div class="l">Green Points</div><div class="v num" style="color:var(--green)">' + pts + '</div><div class="small muted">' + C.level(pts).name + ' level</div></div>' +
       '<div class="card kpi"><div class="l">Active orders</div><div class="v num">' + active.length + '</div><div class="small muted">' + (active[0] ? active[0].id + ' · ' + STATUS[active[0].status][0] : 'none right now') + '</div></div>' +
-      '<div class="card kpi"><div class="l">Recommended total time</div><div class="v num">' + (top ? top.need + ' min' : '—') + '</div><div class="small muted">' + (top ? 'queue ' + top.queue.wait + ' + prep ' + top.item.prep + ' + walk/eat' : 'no fitting option') + '</div></div></div>' +
+      '</div>' +
       '<div class="grid g2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)"><section><h2>Your break plan</h2>' +
-      (top ? recCard(sf, top, rec, true) : '<div class="card"><p><b>No option fits right now.</b></p><p class="muted small">' + (rec.avail == null ? 'Add your class schedule to plan around breaks.' : rec.excluded.length + ' items checked; none fit your time, budget, diet and outlet hours. See why in AI Picks.') + '</p><button class="btn" data-a="go" data-r="ai">See all options</button></div>') +
+      (top ? recCard(sf, top, rec, true, true) : '<div class="card"><p><b>No option fits right now.</b></p><p class="muted small">' + (rec.avail == null ? 'Add your class schedule to plan around breaks.' : rec.excluded.length + ' items checked; none fit your time, budget, diet and outlet hours. See why in AI Picks.') + '</p><button class="btn" data-a="go" data-r="ai">See all options</button></div>') +
       '</section>' +
       '<section><h2>Shortcuts</h2><div class="grid g2 keep2" style="grid-template-columns:repeat(2,minmax(0,1fr))">' + [['marketplace', 'Find food', 'store'], ['stations', 'Pickup stations', 'box'], ['sustain', 'Green action', 'leaf'], ['rewards', 'Rewards', 'gift']].map(s => '<button class="btn" style="min-height:64px" data-a="go" data-r="' + s[0] + '">' + ic(s[2]) + s[1] + '</button>').join('') + '</div>' +
       '<div class="card" style="margin-top:14px"><h3>Next reward</h3>' + (nextR ? '<div class="row between small"><span>' + esc(nextR.name) + '</span><span class="num">' + pts + ' / ' + nextR.cost + '</span></div><div class="bar" style="margin-top:6px"><i style="width:' + Math.min(100, pts / nextR.cost * 100) + '%;background:var(--green)"></i></div>' : '<p class="small">You can redeem every reward in the catalogue.</p>') + '</div>' +
