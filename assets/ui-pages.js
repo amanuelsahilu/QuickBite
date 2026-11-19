@@ -1,14 +1,16 @@
 /* ---------- landing page & project status ---------- */
 // a pizza slice, drawn here (the bowl illustration read as a face at this size)
-const PIZZA = '<svg viewBox="0 0 100 100" role="img" aria-label="Pizza slice"><path d="M18 30Q50 10 82 30L50 90Z" fill="#fbbf24"/><path d="M18 30Q50 10 82 30L78 38Q50 20 22 38Z" fill="#d97706"/><circle cx="42" cy="44" r="6" fill="#dc2626"/><circle cx="60" cy="47" r="5.5" fill="#dc2626"/><circle cx="50" cy="64" r="5" fill="#dc2626"/><path d="M38 56q3-4 7-1M57 60q3-4 6 0" stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round"/></svg>';
+const WRAP = '<svg viewBox="0 0 100 100" role="img" aria-label="Wrap"><g transform="rotate(-35 50 50)"><rect x="30" y="14" width="40" height="74" rx="20" fill="#f2d29b"/><rect x="30" y="14" width="40" height="74" rx="20" fill="none" stroke="#d9a85b" stroke-width="3"/><ellipse cx="50" cy="22" rx="17" ry="9" fill="#22c55e"/><circle cx="43" cy="20" r="4" fill="#a16207"/><circle cx="55" cy="21" r="4" fill="#a16207"/><circle cx="50" cy="16" r="3" fill="#ef4444"/><path d="M34 52h32M34 66h32" stroke="#d9a85b" stroke-width="3" stroke-linecap="round"/></g></svg>';
 function heroPic() {
   // the same 30-minute break, without and with QuickBite
   const bar = parts => '<div class="tl tl2" aria-hidden="true">' + parts.map(p => '<span style="flex:' + p[1] + ';background:' + p[2] + (p[3] ? ';color:' + p[3] : '') + '">' + p[0] + '</span>').join('') + '</div>';
-  return '<div class="card plan"><div class="row between" style="align-items:flex-start"><b class="plan-t">A 30-minute break, with and without QuickBite</b><span class="gp">+5 Green Points</span></div>' +
-    '<div class="food" style="margin:16px 0 18px;align-items:center"><div class="art pz">' + PIZZA + '</div><div><b>Margherita Pizza</b><br><span class="small muted">Pizza Corner · ready 10:31</span></div></div>' +
-    '<div class="small muted plan-l">Without QuickBite</div>' + bar([['order', 6, '#94a3b8', '#0f2a43'], ['wait in line', 12, '#64748b'], ['eat', 12, '#16a34a']]) +
-    '<div class="small plan-l" style="margin-top:12px"><b>With QuickBite</b></div>' + bar([['pick up your food', 5, '#0d9488'], ['eat', 12, '#16a34a'], ['pray', 8, '#0f2a43'], ['rest', 5, '#cbd5e1', '#0f2a43']]) +
+  return '<div class="card plan">' +
+    '<div class="row between" style="align-items:center;gap:10px;margin-bottom:18px"><div class="food" style="align-items:center"><div class="art pz">' + WRAP + '</div><div><b>Falafel Wrap</b><br><span class="small muted">Campus Café</span></div></div><span class="gp">+5 Green Points</span></div>' +
+    '<div class="small plan-l"><b>With QuickBite</b></div>' + bar([['pick up your food', 5, '#0d9488'], ['eat', 12, '#16a34a'], ['pray', 8, '#0f2a43'], ['rest', 5, '#cbd5e1', '#0f2a43']]) +
+    '<div style="height:8px"></div>' + bar([['order', 6, '#94a3b8', '#0f2a43'], ['wait in line', 12, '#64748b'], ['eat', 12, '#16a34a']]) +
+    '<div class="small muted plan-l" style="margin:5px 0 0">Without QuickBite</div>' +
     '<div class="row between" style="margin-top:16px;gap:8px"><span class="chip">Pickup station · Student Center</span><span class="fits">✓ Fits your break · 5 min to spare</span></div>' +
+    '<p class="plan-c">All in 30 different minutes</p>' +
     '</div>';
 }
 function LANDING() {
