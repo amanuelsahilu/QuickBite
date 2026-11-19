@@ -373,3 +373,21 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .ostate i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px light-dark(#bbf7d0,#1d4a2c)}
 .ostate.off{background:light-dark(#fee2e2,#3b1616);color:var(--red)}.ostate.off i{box-shadow:0 0 0 4px light-dark(#fecaca,#5a1d1d)}
 .rclosed summary{cursor:pointer;font-weight:700}.rclosed .list>div{padding:8px 0;border-top:1px solid var(--line)}
+/* restaurant queue */
+.pq{display:flex;flex-direction:column}
+.pqh,.pqr{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) 60px 70px;gap:10px;align-items:center}
+.pqh{padding:0 0 8px;border-bottom:1px solid var(--line)}
+.pqr{padding:10px 0;border-bottom:1px solid var(--line)}.pqr:last-child{border-bottom:0}
+.pqr>span:first-child{display:flex;align-items:center;min-width:0}
+.pwr{display:grid;grid-template-columns:52px minmax(0,1fr) 40px;gap:12px;align-items:center;padding:7px 0}
+.pwr .bar{height:12px}.pwr .bar>i{background:var(--acc)}
+.pwr.full .bar>i{background:var(--red)}.pwr.full span{color:var(--red);font-weight:700}
+.pwr>span{text-align:right}
+@container (max-width:760px){
+ .g3.kp{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .g3.kp .card{padding:12px}.g3.kp .v{font-size:20px}
+ .pqh{display:none}
+ .pqr{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}
+ .pqr>span:nth-child(3){color:var(--muted)}
+}
+.pqr>span:nth-child(4){justify-self:end}

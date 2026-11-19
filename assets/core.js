@@ -372,6 +372,9 @@ function createCore(store) {
     });
   }
   function clearCart(actor) { return tx(() => { S.carts[actor] = { outletId: null, lines: [] }; }); }
+  function strHash(t) { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
+  // orders booked into a pickup slot: real orders plus simulated bookings from other students (fixed per outlet and slot)
+  function slotUse(outletId, slot) { const o = outlet(outletId); return Math.min(o.capacityPerSlot, slotLoad(outletId, slot) + strHash(outletId + slot) % (o.capacityPerSlot + 2)); }
   function slotLoad(outletId, slot) { return S.orders.filter(o => o.outletId === outletId && o.slot === slot && ACTIVE.includes(o.status)).length; }
   function quote(actor, opts) {
     const c = cart(actor); opts = opts || {};
@@ -394,11 +397,9 @@ function createCore(store) {
     const slots = [];
     // other students' bookings are simulated (fixed per outlet and slot) so availability varies;
     // each outlet also opens a different number of upcoming slots
-    const hash = t => { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
-    const nSlots = 3 + hash(o.id) % 5;
+    const nSlots = 3 + strHash(o.id) % 5;
     for (let m = first; m < Math.min(toMin(o.close), first + slotLen * nSlots); m += slotLen) {
-      const sim = hash(o.id + hm(m)) % (o.capacityPerSlot + 2); const used = Math.min(o.capacityPerSlot, slotLoad(o.id, hm(m)) + sim);
-      slots.push({ slot: hm(m), used, cap: o.capacityPerSlot, full: used >= o.capacityPerSlot });
+      const used = slotUse(o.id, hm(m)); slots.push({ slot: hm(m), used, cap: o.capacityPerSlot, full: used >= o.capacityPerSlot });
     }
     if (slots.length && slots.every(x => x.full)) { const l = slots[slots.length - 1]; l.used = l.cap - 1; l.full = false; }
     const method = opts.method || 'counter';
@@ -725,7 +726,7 @@ function createCore(store) {
   return {
     DAYS, PREFS, ALLERGENS, HARD_PREFS, GREEN_TYPES, TRANSITIONS,
     get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
-    MAX_PRICE, PICKUP_MIN, HEAD_MAX_MIN, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
+    MAX_PRICE, PICKUP_MIN, HEAD_MAX_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
     cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
