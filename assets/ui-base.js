@@ -88,7 +88,7 @@ const APP = {
     main: { id: 'main', user: 's1', route: 'dashboard', p: {} },
   },
 };
-const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
+const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['orders', 'Orders', 'bag'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
 const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf']];
 const STU_TABS = [['dashboard', 'Home', 'home'], ['marketplace', 'Food', 'store'], ['ai', 'Picks', 'spark'], ['orders', 'Orders', 'bag'], ['more', 'More', 'menu']];
 const RES_TABS = [['rdash', 'Home', 'home'], ['rorders', 'Orders', 'list'], ['rmenu', 'Menu', 'store'], ['rsales', 'Sales', 'chart'], ['more', 'More', 'menu']];

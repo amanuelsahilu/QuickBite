@@ -72,7 +72,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 8, seq: 0,
+      demo: true, version: 9, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -198,11 +198,20 @@ function createCore(store) {
       { id: 'l5', userId: 's2', delta: 20, reason: 'Welcome bonus', ref: 'demo', at: BASE - 86400000 },
     ];
     s.notifications = [{ id: 'n0', userId: 's1', text: 'Checked out 10 times', link: 'orders', at: BASE + (11 * 60 + 35 - TZ_OFFSET) * 60000 - 86400000, read: false, kind: 'transactional' }];
+    // Aisha's past orders, so the Orders page has a history to show
+    const past = (n, itemId, qty, method, stationId, daysAgo, hhmm) => {
+      const it = s.items.find(x => x.id === itemId); const at = BASE + ((-daysAgo) * 1440 + toMin(hhmm) - TZ_OFFSET) * 60000; const total = it.price * qty;
+      return { id: 'QB-0' + n, studentId: 's1', studentName: 'Aisha', outletId: it.outletId, lines: [{ itemId: it.id, name: it.name, price: it.price, qty, note: '', lineTotal: total, allergens: it.allergens, prep: it.prep }],
+        subtotal: total, discount: 0, total, method, stationId: stationId || null, compartmentId: null, slot: hm(toMin(hhmm) + 10), prepMin: it.prep * qty,
+        status: 'completed', payment: 'sim_captured', events: [{ s: 'submitted', at, by: 's1' }, { s: 'accepted', at: at + 60000, by: 'staff' }, { s: 'preparing', at: at + 120000, by: 'staff' }, { s: 'ready', at: at + 300000, by: 'staff' }, { s: 'collected', at: at + 480000, by: 'staff' }, { s: 'completed', at: at + 480000, by: 'system' }],
+        createdAt: at, readyBy: at + 300000, token: 'H' + n, tokenUsed: true, reusable: false, allergyNote: [], delay: 0, reviewed: true };
+    };
+    s.orders = [past(998, 'i-cafe-1', 1, 'counter', null, 3, '12:20'), past(997, 'i-coffee-1', 2, 'station', 'st-stc', 4, '10:05'), past(996, 'i-sand-2', 1, 'counter', null, 7, '13:40')];
     return s;
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 8) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 9) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

@@ -180,11 +180,6 @@ const STU_VIEWS = {
       '<details style="margin-top:14px"><summary>Status history</summary><div class="list small">' + o.events.map(e => '<div>' + dayTime(e.at) + ' · <b>' + esc(e.s) + '</b>' + (e.note ? ' — ' + esc(e.note) : '') + '</div>').join('') + '</div></details>';
   },
 
-  queue(sf) {
-    return '<h1>Queue</h1><div class="card scroll"><table class="stack"><thead><tr><th>Outlet</th><th class="r">In queue</th><th class="r">Queue wait</th><th class="r">Prep</th><th class="r">Est. total</th><th>Status</th><th></th></tr></thead><tbody>' +
-      C.S.outlets.map(o => { const q = C.queueInfo(o.id); return '<tr><td><b>' + esc(o.name) + '</b><br><span class="small muted">' + esc(q.label) + '</span></td><td class="r num">' + (q.open ? q.count : '—') + '</td><td class="r num">' + (q.open ? q.wait + ' min' : '—') + '</td><td class="r num">' + q.avgPrep + ' min</td><td class="r num">' + (q.open ? q.total + ' min' : '—') + '</td><td>' + lvlChip(q.level) + '</td><td><button class="btn sm" data-a="go" data-r="outlet" data-id="' + o.id + '">Menu</button></td></tr>'; }).join('') + '</tbody></table></div>';
-  },
-
   stations(sf) {
     const S = C.S; const comps = S.compartments; const free = comps.filter(c => c.state === 'free').length;
     return '<h1>Pickup stations</h1>' +
