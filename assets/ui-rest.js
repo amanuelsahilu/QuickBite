@@ -11,9 +11,9 @@ function ocard(sf, o) {
   if (o.status === 'ready') { const comp = o.compartmentId && C.S.compartments.find(c => c.id === o.compartmentId); const placed = comp && comp.state === 'occupied';
     act = o.method === 'station' ? (placed ? '<span class="small">In compartment ' + comp.n + ' — awaiting student</span>' : '<button class="btn sm p" data-a="place" data-id="' + o.id + '">Place in compartment ' + (comp ? comp.n : '') + '</button><button class="btn sm" data-a="toCounter" data-id="' + o.id + '">Switch to counter</button>') + '<button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'
       : '<button class="btn sm p" data-a="verifyAsk" data-id="' + o.id + '">Verify code & hand over</button><button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'; }
-  return '<div class="ocard"><div class="row between"><span class="id">' + o.id + '</span><span class="chip ' + (late ? 'r' : 'n') + '">' + o.slot + '</span></div><div class="small muted">' + esc(o.studentName) + ' · ' + (o.method === 'station' ? 'Station: ' + esc(C.S.stations.find(s => s.id === o.stationId).name) : 'Counter') + ' · ' + ago(o.createdAt) + '</div><div style="margin:6px 0">' + it + '</div>' +
+  return '<div class="ocard"><div class="row between"><span class="oav">' + esc(o.studentName.charAt(0)) + '</span><span class="id" style="flex:1">' + o.id + '</span><span class="chip ' + (late ? 'r' : 'n') + '">' + o.slot + '</span></div><div class="small muted">' + esc(o.studentName) + ' · ' + (o.method === 'station' ? 'Station: ' + esc(C.S.stations.find(s => s.id === o.stationId).name) : 'Counter') + ' · ' + ago(o.createdAt) + '</div><div style="margin:6px 0">' + it + '</div>' +
     (o.allergyNote && o.allergyNote.length ? '<div class="warn small" style="padding:4px 8px">' + o.allergyNote.map(esc).join('<br>') + '</div>' : '') + (o.reusable ? '<div class="small"><span class="chip g">Reusable container</span></div>' : '') +
-    '<div class="small">Expected ' + timeOf(o.readyBy) + (o.delay ? ' (+' + o.delay + ')' : '') + (late ? ' · <b style="color:var(--red)">overdue</b>' : '') + '</div><div class="row" style="margin-top:8px">' + act + '</div></div>';
+    '<div class="small oexp">' + ic('clock') + '<span>Expected ' + timeOf(o.readyBy) + (o.delay ? ' (+' + o.delay + ')' : '') + (late ? ' · <b style="color:var(--red)">overdue</b>' : '') + '</span></div><div class="oact">' + act + '</div></div>';
 }
 const RES_VIEWS = {
   rdash(sf) {
@@ -30,12 +30,12 @@ const RES_VIEWS = {
   },
   rorders(sf) {
     const id = curOutlet(sf); const all = C.outletOrders(sf.user, id); const o = C.outlet(id);
-    const col = (s, t) => { const xs = all.filter(x => x.status === s).sort((a, b) => a.slot.localeCompare(b.slot)); return '<div class="col"><h3><span>' + t + '</span><span class="chip">' + xs.length + '</span></h3>' + (xs.map(x => ocard(sf, x)).join('') || '<p class="small muted" style="padding:6px">None</p>') + '</div>'; };
+    const col = (s, t) => { const xs = all.filter(x => x.status === s).sort((a, b) => a.slot.localeCompare(b.slot)); return '<div class="col col-' + s + '"><h3><span class="cdot"></span><span style="flex:1">' + t + '</span><span class="chip">' + xs.length + '</span></h3>' + (xs.map(x => ocard(sf, x)).join('') || '<p class="small muted" style="padding:6px">None</p>') + '</div>'; };
     const done = all.filter(x => ['completed', 'rejected', 'cancelled', 'no_show'].includes(x.status)).slice(0, 10);
-    return rHead(sf, 'Live orders', o.status === 'paused' ? '<b style="color:var(--red)">Ordering paused</b>' : 'Accepting orders') +
-      '<div class="row" style="margin-bottom:12px"><button class="btn' + (o.status === 'paused' ? ' p' : '') + '" data-a="pause">' + (o.status === 'paused' ? 'Resume orders' : 'Pause new orders') + '</button></div>' +
+    return rHead(sf, 'Live orders') +
+      '<div class="row" style="margin-bottom:12px"><span class="ostate' + (o.status === 'paused' ? ' off' : '') + '"><i></i>' + (o.status === 'paused' ? 'Ordering paused' : 'Accepting orders') + '</span><button class="btn' + (o.status === 'paused' ? ' p' : '') + '" data-a="pause">' + (o.status === 'paused' ? 'Resume orders' : 'Pause new orders') + '</button></div>' +
       '<div class="kan">' + col('submitted', 'New') + col('accepted', 'Accepted') + col('preparing', 'Preparing') + col('ready', 'Ready') + '</div>' +
-      '<details class="card" style="margin-top:14px"><summary>Recently closed (' + done.length + ')</summary><div class="list small">' + done.map(x => '<div class="row between"><span>' + x.id + ' · ' + x.lines.map(l => l.qty + '× ' + esc(l.name)).join(', ') + '</span>' + stChip(x.status) + '</div>').join('') + '</div></details>';
+      '<details class="card rclosed" style="margin-top:14px"><summary>Recently closed (' + done.length + ')</summary><div class="list small">' + done.map(x => '<div class="row between"><span><b class="num">' + x.id + '</b> · ' + esc(x.studentName) + ' · ' + x.lines.map(l => l.qty + '× ' + esc(l.name)).join(', ') + '</span>' + stChip(x.status) + '</div>').join('') + '</div></details>';
   },
   rqueue(sf) {
     const id = curOutlet(sf); const o = C.outlet(id); const q = C.queueInfo(id); const live = C.outletOrders(sf.user, id).filter(x => ['submitted', 'accepted', 'preparing'].includes(x.status)).sort((a, b) => a.readyBy - b.readyBy);
