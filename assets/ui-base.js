@@ -125,7 +125,7 @@ function renderSurface(sf) {
     '</header>';
   const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><button class="brand wm hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + WORDMARK + '</button>' +
     nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') || (n[0] === 'profile' && sf.route === 'diet') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
-    '<div class="role"><b>' + esc(u.name) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name + ' (' + o.role + ')').join(', '))) + '</span></div></aside>';
+    '<div class="role">' + (stu ? '' : '<span class="rav">' + esc(u.name.charAt(0)) + '</span>') + '<div><b>' + esc(stu ? u.name : u.full) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name).join(' · '))) + '</span></div></div></aside>';
   const mt = '<nav class="mtabs" aria-label="Primary">' + tabs.map(t => '<button data-a="' + (t[0] === 'more' ? 'more' : 'go') + '" data-r="' + t[0] + '"' + (sf.route === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2]) + t[1] + '</button>').join('') + '</nav>';
   const modal = sf.modal ? '<div class="modal" data-a="closeBg" role="dialog" aria-modal="true"><div class="mbox">' + renderModal(sf) + '</div></div>' : '';
   const t = sf.toast ? '<div class="toast' + (sf.toast.e ? ' e' : '') + '" role="status">' + esc(sf.toast.msg) + '</div>' : '';

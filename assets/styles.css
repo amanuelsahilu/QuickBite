@@ -480,3 +480,8 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .ncat:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
 .newi .pill:has(input:checked){background:var(--acc);border-color:var(--acc)}
 .newi .pill.al:has(input:checked){background:light-dark(#fee2e2,#3b1616);border-color:var(--red);color:var(--red)}
+/* restaurant sidebar name card: lighter */
+.restaurant .side .role{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid light-dark(#fed7aa,#4a3322);box-shadow:0 2px 8px rgb(15 42 67/.05)}
+.restaurant .side .role b{color:var(--ink)}
+.rav{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font-weight:800}
+.side .role>div{min-width:0}
