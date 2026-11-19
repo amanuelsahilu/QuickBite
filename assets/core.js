@@ -70,7 +70,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 5, seq: 0,
+      demo: true, version: 6, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -191,12 +191,12 @@ function createCore(store) {
       { id: 'l4', userId: 's1', delta: 5, reason: 'Proper Waste Disposal (verified)', ref: 'demo', at: BASE - 86400000, type: 'waste' },
       { id: 'l5', userId: 's2', delta: 20, reason: 'Welcome bonus', ref: 'demo', at: BASE - 86400000 },
     ];
-    s.notifications = [{ id: 'n0', userId: 's1', text: 'Welcome to QuickBite! Plan your first meal around your next break.', link: 'dashboard', at: BASE, read: false, kind: 'transactional' }];
+    s.notifications = [{ id: 'n0', userId: 's1', text: 'Checked out 10 times', link: 'orders', at: BASE + (11 * 60 + 35 - TZ_OFFSET) * 60000 - 86400000, read: false, kind: 'transactional' }];
     return s;
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 5) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 6) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

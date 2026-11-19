@@ -6,7 +6,7 @@ const aed = n => n == null ? '—' : 'AED ' + Number(n).toFixed(2).replace(/\.0
 const pct = n => n == null ? '—' : n + '%';
 const timeOf = ts => C.hm(C.parts(ts).min);
 const dayTime = ts => { const p = C.parts(ts); return C.DAYS[p.day] + ' ' + C.hm(p.min); };
-const ago = ts => { const m = Math.round((C.now() - ts) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
+const ago = ts => { const m = Math.round((C.now() - ts) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m <= 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
 
 const I = {
   home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
