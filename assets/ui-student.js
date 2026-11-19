@@ -6,24 +6,30 @@ const bName = id => C.bName(id);
 function diningLine(r) {
   return '<span class="small muted">' + esc(r.outlet.name) + ' · ' + aed(r.item.price) + ' · ready ~' + r.ready + ' min</span>';
 }
-const PICKUP_MIN = 3; // minutes to collect a ready order
-function breakTimeline(r, avail) {
+const PICKUP_MIN = C.PICKUP_MIN;
+function breakTimeline(r, avail, late) {
   const cfg = C.S.config.timing;
   // [label, minutes, colour, bar width]; pick up is drawn the same width as order to show how quick it is
-  const parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', PICKUP_MIN, '#0d9488', cfg.orderLeadMin], ['Eat', r.eat, '#16a34a']];
-  const used = parts.reduce((a, p) => a + p[1], 0);
-  parts.push(['Rest', Math.max(0, (avail || 0) - used), '#0f2a43']);
+  let parts;
+  if (late) {
+    // running late: no eating, straight to class; order and pick up take a big share of the bar to show the rush
+    parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', PICKUP_MIN, '#0d9488'], ['Head to class', r.head, '#0f2a43']];
+  } else {
+    parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', PICKUP_MIN, '#0d9488', cfg.orderLeadMin], ['Eat', r.eat, '#16a34a']];
+    const used = parts.reduce((a, p) => a + p[1], 0);
+    parts.push(['Rest', Math.max(0, (avail || 0) - used), '#0f2a43']);
+  }
   return '<div class="tl" role="img" aria-label="Break plan timeline">' + parts.filter(p => p[1] > 0).map(p => '<span style="flex:' + (p[3] || p[1]) + ';background:' + p[2] + '">' + p[1] + 'm</span>').join('') + '</div>' +
     '<div class="tlk">' + parts.map(p => '<span><i style="background:' + p[2] + '"></i>' + p[0] + '</span>').join('') + '</div>';
 }
 function recCard(sf, r, rec, big, plain) {
   const it = r.item; const walkBack = C.walk(r.outlet.building, rec.break.to || r.outlet.building);
-  r.walkBack = walkBack; r.eat = rec.sort && sf.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
+  r.walkBack = walkBack; r.eat = rec.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
   return '<div class="card' + (big ? ' hero' : '') + '"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
     '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + (C.S.config.timing.orderLeadMin + PICKUP_MIN) + ' min</div>' +
     '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
     (r.reasons.length && !plain ? '<div class="small">' + r.reasons.map(x => '✓ ' + esc(x)).join('<br>') + '</div>' : '') + '</div></div>' +
-    (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail) + '</div>' : '') +
+    (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail, rec.late) + '</div>' : '') +
     '<div class="row" style="margin-top:12px"><button class="btn p" data-a="add" data-id="' + it.id + '">Add to cart</button><button class="btn" data-a="fit" data-id="' + it.id + '">View schedule fit</button><button class="btn" data-a="go" data-r="outlet" data-id="' + r.outlet.id + '">Menu</button></div></div>';
 }
 
@@ -79,7 +85,7 @@ const STU_VIEWS = {
     const def = SORTS.find(s => s[0] === sort);
     return '' +
       '<div class="row" style="margin:8px 0"><div class="tog" role="group" aria-label="Rank by">' + SORTS.map(s => '<button data-a="sort" data-s="' + s[0] + '" aria-pressed="' + (sort === s[0]) + '">' + s[1] + '</button>').join('') + '</div></div>' +
-      '<div class="row" style="margin-bottom:10px"><button class="cb" data-a="late" aria-pressed="' + !!sf.late + '" style="' + (sf.late ? 'background:var(--sel);color:var(--selink)' : '') + '">' + ic('clock') + ' Running Late mode: ' + (sf.late ? 'on' : 'off') + '</button><span class="small muted">' + (sf.late ? 'Only options that fit with no eating time and a ' + C.S.config.timing.runningLateBufferMin + '-min safety buffer.' : 'Allows ' + C.S.config.timing.eatBufferMin + ' min to eat.') + '</span></div>' +
+      '<div class="row" style="margin-bottom:10px"><button class="cb" data-a="late" aria-pressed="' + !!sf.late + '" style="' + (sf.late ? 'background:var(--sel);color:var(--selink)' : '') + '">' + ic('clock') + ' Running Late mode: ' + (sf.late ? 'on' : 'off') + '</button><span class="small muted">' + (sf.late ? 'No time to eat: order, pick up and head straight to class.' : 'Allows ' + C.S.config.timing.eatBufferMin + ' min to eat.') + '</span></div>' +
       (rec.avail == null ? '' : '<p class="small">You have <b>' + rec.avail + ' min</b> before ' + esc(rec.break.next ? rec.break.next.name + ' at ' + rec.break.next.start + ' in ' + bName(rec.break.next.building) : 'your next class') + '.</p>') +
       (top ? '<h2>Best option for your next break</h2>' + recCard(sf, top, rec, true) + (rec.list.length > 1 ? '<h2 style="margin-top:18px">Alternatives</h2><div class="grid g2">' + rec.list.slice(1, 7).map(r => recCard(sf, r, rec, false)).join('') + '</div>' : '')
         : '<div class="card"><h2>Nothing fits right now</h2><p>No option meets your time, budget, dietary and allergy rules' + ((sort === 'healthiest' || sort === 'protein') ? ' with supplied nutrition data' : '') + '. We will not suggest something that might make you late or that is not confirmed safe for your allergies.</p><button class="btn" data-a="go" data-r="diet">Review dietary profile</button></div>') +
@@ -189,7 +195,7 @@ const STU_VIEWS = {
       '<div class="grid g2"><form class="card" data-form="evidence"><h2>Show your green action</h2><label class="f" for="et-' + sf.id + '">Action</label><select id="et-' + sf.id + '" name="type">' + C.GREEN_TYPES.map(g => '<option value="' + g.id + '"' + (g.verifier === 'deferred' || g.verifier === 'auto-order' ? ' disabled' : '') + '>' + g.name + ' · ' + g.pts + ' pts' + (g.verifier === 'auto-order' ? ' (automatic on order)' : '') + '</option>').join('') + '</select>' +
       '<label class="f" for="eo-' + sf.id + '">Where (for reusable container)</label><select id="eo-' + sf.id + '" name="outletId"><option value="">Not at an outlet</option>' + C.S.outlets.filter(o => o.reusable).map(o => '<option value="' + o.id + '">' + esc(o.name) + '</option>').join('') + '</select>' +
       '<label class="f" for="ef-' + sf.id + '">Photo</label><input type="file" id="ef-' + sf.id + '" name="photo" accept="image/*" capture="environment">' +
-      '<label class="f" for="ec-' + sf.id + '">or Smart Green Station code</label><input type="text" id="ec-' + sf.id + '" name="code" placeholder="e.g. GS-STC-01">' +
+      '<label class="f" for="ec-' + sf.id + '">or Smart Green Station code</label><input type="text" id="ec-' + sf.id + '" name="code" placeholder="e.g. GS-SJA-01">' +
       '<button class="btn p" style="margin-top:12px">Submit for verification</button></form>' +
       '<div class="card"><h2>Your submissions</h2>' + (ev.length ? '<div class="list">' + ev.map(e => '<div><div class="row between"><b>' + esc(C.GREEN_TYPES.find(g => g.id === e.type).name) + '</b><span class="chip ' + ({ pending: 'a', verified: 'g', rejected: 'r' }[e.status]) + '">' + e.status + '</span></div><div class="small muted">' + dayTime(e.at) + (e.file ? ' · ' + esc(e.file) : '') + (e.code ? ' · ' + esc(e.code) : '') + (e.note ? ' · ' + esc(e.note) : '') + '</div>' + '' + '</div>').join('') + '</div>' : '<p class="muted">Nothing submitted yet.</p>') +
       '<h3 style="margin-top:14px">Smart Green Stations</h3>' + C.S.greenStations.map(g => '<p class="small"><b>' + esc(g.name) + '</b><br>Code: <span class="num">' + g.code + '</span> · <button class="btn sm" data-a="go" data-r="map">On map</button></p>').join('') + '</div></div>' +
@@ -250,7 +256,7 @@ const STU_MODALS = {
     const other = r.excluded.filter(x => !/^Needs \d+ min/.test(x));
     const fits = rec.avail == null || order + pick + (sf.late ? 0 : cfg.eatBufferMin) <= rec.avail;
     return '<div class="row between"><h2>Schedule fit</h2><button class="btn sm" data-a="close">Close</button></div><p><b>' + esc(r.item.name) + '</b> from ' + esc(r.outlet.name) + '</p><table><tbody>' +
-      '<tr><td>Time to next class</td><td class="r num">' + (rec.avail != null ? rec.avail + ' min' : 'no class limit') + '</td></tr><tr><td>Order time</td><td class="r num">' + order + ' min</td></tr><tr><td>Pickup time</td><td class="r num">' + pick + ' min</td></tr>' + (rest != null ? '<tr><td>Time to eat and rest</td><td class="r num">' + rest + ' min</td></tr>' : '') + '</tbody></table>' +
+      '<tr><td>Time to next class</td><td class="r num">' + (rec.avail != null ? rec.avail + ' min' : 'no class limit') + '</td></tr><tr><td>Order time</td><td class="r num">' + order + ' min</td></tr><tr><td>Pickup time</td><td class="r num">' + pick + ' min</td></tr>' + (sf.late ? '<tr><td>Time to head to class</td><td class="r num">' + r.head + ' min</td></tr>' : rest != null ? '<tr><td>Time to eat and rest</td><td class="r num">' + rest + ' min</td></tr>' : '') + '</tbody></table>' +
       (other.length ? '<div class="warn">' + esc(other.join('; ')) + '</div>' : fits ? '<div class="ok">Fits your break.</div>' : '<div class="bad">Does not fit your break.</div>');
   },
   redeem(sf, m) { const r = C.S.rewards.find(x => x.id === m.id); return '<h2>Redeem ' + esc(r.name) + '?</h2><p>This uses <b>' + r.cost + '</b> of your ' + C.balance(sf.user) + ' points.</p><p class="small muted">' + esc(r.terms) + '</p><div class="row"><button class="btn p" data-a="redeem" data-id="' + r.id + '" data-k="' + m.key + '">Confirm</button><button class="btn" data-a="close">Cancel</button></div>'; },

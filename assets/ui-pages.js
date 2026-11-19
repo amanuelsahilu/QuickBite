@@ -14,7 +14,7 @@ function heroPic() {
     '<div class="small plan-l"><b>With QuickBite</b></div>' + bar([['pick up', 3, '#0d9488', '#fff', 'tiny'], ['eat', 12, '#16a34a'], ['pray', 9, '#0f2a43'], ['rest', 6, '#cbd5e1', '#0f2a43']]) +
     '<div style="height:8px"></div>' + bar([['order', 6, '#94a3b8', '#0f2a43'], ['wait in line', 12, '#64748b'], ['eat', 12, '#16a34a']]) +
     '<div class="small muted plan-l" style="margin:5px 0 0">Without QuickBite</div>' +
-    '<div class="row between" style="margin-top:16px;gap:8px"><span class="chip">Pickup station · Student Center</span><span class="fits">✓ Fits your break · 6 min to spare</span></div>' +
+    '<div class="row between" style="margin-top:16px;gap:8px"><span class="chip">Pickup station · SJA Cafeteria</span><span class="fits">✓ Fits your break · 6 min to spare</span></div>' +
     '<p class="plan-c"><span>All in 30</span> different minutes</p>' +
     '</div>';
 }

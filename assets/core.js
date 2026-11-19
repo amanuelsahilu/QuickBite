@@ -4,6 +4,8 @@
 function createCore(store) {
   const KEY = 'quickbite-demo-v1';
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const PICKUP_MIN = 3; // minutes to collect a ready order
+  const HEAD_MAX_MIN = 5; // running late: walk to class shown as at most 5 min
   const TZ_OFFSET = 4 * 60; // campus-local time (Asia/Dubai, UTC+4)
   const BASE = Date.UTC(2026, 10, 16); // Monday 16 Nov 2026 00:00 UTC — demo week anchor
 
@@ -70,7 +72,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 7, seq: 0,
+      demo: true, version: 8, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -82,7 +84,6 @@ function createCore(store) {
         { id: 'eng', name: 'Engineering Building', x: 12, y: 18 },
         { id: 'lib', name: 'Library', x: 50, y: 12 },
         { id: 'stc', name: 'Student Center', x: 48, y: 52 },
-        { id: 'caf', name: 'Main Cafeteria', x: 80, y: 46 },
         { id: 'bus', name: 'Business Building', x: 16, y: 74 },
         { id: 'sci', name: 'Science Building', x: 82, y: 82 },
         { id: 'sja', name: 'SJA Cafeteria', x: 48, y: 52 },
@@ -112,13 +113,13 @@ function createCore(store) {
       ],
       items: [],
       stations: [
-        { id: 'st-eng', name: 'Engineering Building station', building: 'eng', hours: '07:00–18:00', state: 'operational', comps: 8 },
-        { id: 'st-stc', name: 'Student Center station', building: 'stc', hours: '07:00–20:00', state: 'operational', comps: 12 },
-        { id: 'st-lib', name: 'Library station', building: 'lib', hours: '08:00–18:00', state: 'operational', comps: 8 },
-        { id: 'st-caf', name: 'Main Cafeteria station', building: 'caf', hours: '07:00–20:00', state: 'maintenance', comps: 8 },
+        { id: 'st-eng', name: 'SJC Cafeteria station', building: 'sjc', hours: '07:00–18:00', state: 'operational', comps: 8 },
+        { id: 'st-stc', name: 'SJA Cafeteria station', building: 'sja', hours: '07:00–20:00', state: 'operational', comps: 12 },
+        { id: 'st-lib', name: 'SJB Cafeteria station', building: 'sjb', hours: '08:00–18:00', state: 'operational', comps: 8 },
+        { id: 'st-caf', name: 'SJE Cafeteria station', building: 'sje', hours: '07:00–20:00', state: 'maintenance', comps: 8 },
       ],
       compartments: [],
-      greenStations: [{ id: 'gs1', name: 'Smart Green Station — Student Center', building: 'stc', code: 'GS-STC-01' }, { id: 'gs2', name: 'Smart Green Station — Library', building: 'lib', code: 'GS-LIB-01' }],
+      greenStations: [{ id: 'gs1', name: 'Smart Green Station — SJA Cafeteria', building: 'sja', code: 'GS-SJA-01' }, { id: 'gs2', name: 'Smart Green Station — SJB Cafeteria', building: 'sjb', code: 'GS-SJB-01' }],
       profiles: {
         s1: { prefs: ['Halal', 'High Protein'], allergies: ['Tree nuts'], budget: 35, breakLen: 30, favOutlets: ['cafe'], favItems: ['i-cafe-1'] },
         s2: { prefs: ['Vegetarian'], allergies: [], budget: 25, breakLen: 20, favOutlets: [], favItems: [] },
@@ -152,11 +153,11 @@ function createCore(store) {
     I('pizza', 2, 'Chicken Tikka Pizza', 'pizza', 34, 14, ['Halal', 'High Protein'], ['Gluten/wheat', 'Milk/dairy'], { desc: 'Spiced chicken, peppers, onion.' });
     I('pizza', 3, 'Penne Arrabbiata', 'bowl', 25, 10, ['Halal', 'Vegan', 'Vegetarian', 'Dairy-Free'], ['Gluten/wheat'], { desc: 'Penne in spicy tomato sauce.' });
     I('sand', 1, 'Halloumi Toastie', 'sandwich', 17, 5, ['Halal', 'Vegetarian'], ['Milk/dairy', 'Gluten/wheat'], { desc: 'Grilled halloumi, tomato, mint.' });
-    I('sand', 2, 'Turkey Club', 'sandwich', 22, 6, ['Halal', 'High Protein'], ['Gluten/wheat', 'Eggs'], { desc: 'Turkey, egg, lettuce, tomato.', stock: 8 });
-    I('sand', 3, 'Tuna Melt', 'sandwich', 19, 6, ['Halal', 'High Protein'], ['Fish', 'Milk/dairy', 'Gluten/wheat'], { desc: 'Tuna, cheese, sourdough.' });
+    I('sand', 2, 'Turkey Club', 'sandwich', 22, 6, ['Halal', 'High Protein'], ['Gluten/wheat', 'Eggs'], { desc: 'Turkey, egg, lettuce, tomato.', nutrition: { kcal: 560, protein: 46, supplied: 'Supplied by outlet' }, stock: 8 });
+    I('sand', 3, 'Tuna Melt', 'sandwich', 19, 6, ['Halal', 'High Protein'], ['Fish', 'Milk/dairy', 'Gluten/wheat'], { desc: 'Tuna, cheese, sourdough.', nutrition: { kcal: 540, protein: 31, supplied: 'Supplied by outlet' } });
     I('coffee', 1, 'Flat White', 'drink', 14, 3, ['Vegetarian', 'Gluten-Free', 'Halal'], ['Milk/dairy'], { desc: 'Double shot, steamed milk.' });
     I('coffee', 2, 'Oat Latte', 'drink', 16, 3, ['Vegan', 'Vegetarian', 'Dairy-Free', 'Halal'], ['Gluten/wheat'], { desc: 'Oat milk (may contain gluten).' });
-    I('coffee', 3, 'Zaatar Croissant', 'pastry', 9, 2, ['Vegetarian', 'Halal'], ['Gluten/wheat', 'Milk/dairy', 'Sesame'], { desc: 'Butter croissant with zaatar.', stock: 12 });
+    I('coffee', 3, 'Zaatar Croissant', 'pastry', 9, 4, ['Vegetarian', 'Halal'], ['Gluten/wheat', 'Milk/dairy', 'Sesame'], { desc: 'Butter croissant with zaatar.', stock: 12 });
     I('coffee', 4, 'Date Muffin', 'pastry', 10, 1, ['Vegetarian', 'Halal'], null, { desc: 'Allergen information not yet declared by outlet.', stock: 0, status: 'soldout' });
 
     s.stations.forEach(st => { for (let i = 1; i <= st.comps; i++) s.compartments.push({ id: st.id + '-' + i, stationId: st.id, n: i, state: (i % 5 === 0) ? 'occupied-demo' : 'free', orderId: null, tempC: st.state === 'operational' ? null : null }); });
@@ -201,7 +202,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 7) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 8) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -284,21 +285,23 @@ function createCore(store) {
       d.block.forEach(b => excluded.push(b)); if (d.unknown) excluded.push('Allergen info not declared');
       const walkTo = walk(from, o.building), walkBack = walk(o.building, to);
       const ready = Math.max(q.wait + it.prep, walkTo) + cfg.orderLeadMin; // food is prepared while walking
+      // simple break model: order, pick up, then eat (or head straight to class when running late)
       const eat = opts.runningLate ? 0 : cfg.eatBufferMin;
-      const need = ready + eat + walkBack + (opts.runningLate ? cfg.runningLateBufferMin : 0);
+      const head = opts.runningLate ? Math.min(HEAD_MAX_MIN, walkBack) : 0;
+      const need = cfg.orderLeadMin + PICKUP_MIN + eat + head;
       const fits = avail == null ? null : need <= avail;
       if (fits === false) excluded.push('Needs ' + need + ' min, you have ' + avail);
-      if (fits) reasons.push('Fits your break: ~' + need + ' of ' + avail + ' min incl. ' + (eat ? eat + ' min to eat' : 'no eating time') + ' and ' + walkBack + ' min walk to ' + bName(to));
+      if (fits) reasons.push('Fits your break: ~' + need + ' of ' + avail + ' min incl. ' + (eat ? eat + ' min to eat' : head + ' min to head to class'));
       if (d.goals.length) reasons.push('Matches ' + d.goals.join(', '));
       if (prof.favItems.includes(it.id)) reasons.push('One of your favourites');
       const sust = (o.reusable ? 1 : 0) + (it.tags.includes('Vegan') ? 1 : 0);
       const pop = popularity(it.id);
       const score = (fits ? 50 : 0) + d.goals.length * 12 + (prof.favItems.includes(it.id) ? 8 : 0) + (prof.favOutlets.includes(o.id) ? 5 : 0) - need * 0.6 - it.price * 0.3 + Math.min(10, pop / 8) + sust * 2;
-      out.push({ item: it, outlet: o, queue: q, ready, need, avail, fits, excluded, reasons, diet: d, score, pop, sust, eligible: excluded.length === 0 });
+      out.push({ item: it, outlet: o, queue: q, ready, need, head, avail, fits, excluded, reasons, diet: d, score, pop, sust, eligible: excluded.length === 0 });
     });
     const sorters = {
       best: (a, b) => b.score - a.score,
-      fastest: (a, b) => a.need - b.need,
+      fastest: (a, b) => a.item.prep - b.item.prep || a.need - b.need,
       cheapest: (a, b) => a.item.price - b.item.price,
       healthiest: (a, b) => (a.item.nutrition ? a.item.nutrition.kcal : 1e9) - (b.item.nutrition ? b.item.nutrition.kcal : 1e9),
       protein: (a, b) => (b.item.nutrition ? b.item.nutrition.protein : -1) - (a.item.nutrition ? a.item.nutrition.protein : -1),
@@ -308,7 +311,7 @@ function createCore(store) {
     let list = out.filter(r => r.eligible);
     if (opts.sort === 'healthiest' || opts.sort === 'protein') list = list.filter(r => r.item.nutrition);
     list.sort(sorters[opts.sort || 'best']);
-    return { break: br, avail, list, excluded: out.filter(r => !r.eligible), sort: opts.sort || 'best' };
+    return { break: br, avail, list, excluded: out.filter(r => !r.eligible), sort: opts.sort || 'best', late: !!opts.runningLate };
   }
   function bName(id) { const b = S.buildings.find(b => b.id === id); return b ? b.name : 'your class'; }
 
@@ -672,7 +675,7 @@ function createCore(store) {
   return {
     DAYS, PREFS, ALLERGENS, HARD_PREFS, GREEN_TYPES, TRANSITIONS,
     get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
-    now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
+    PICKUP_MIN, HEAD_MAX_MIN, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
     cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
