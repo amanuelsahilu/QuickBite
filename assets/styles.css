@@ -286,3 +286,20 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .dprev h3{display:flex;align-items:center;gap:8px}.dprev h3 svg{width:18px;height:18px;color:var(--teal)}
 .dprev .food{padding:12px 0;border-bottom:1px solid var(--line);margin:0}
 .dprev .btn{margin-top:14px}
+/* sustainability refresh */
+.sus .skpi{display:flex;align-items:center;gap:14px}
+.sus .si{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:light-dark(#dcfce7,#14351f);color:var(--green)}
+.sus .si svg{width:20px;height:20px}
+.sus .skpi .v{color:var(--green)}
+.sform h2,.ssub h2{display:flex;align-items:center;gap:8px}.sform h2 svg{width:22px;height:22px;color:var(--green)}
+.drop{border:1.5px dashed light-dark(#86efac,#2f6a43);border-radius:14px;padding:16px;background:light-dark(#f0fdf4,#10241a);text-align:center}
+.drop input{max-width:100%}
+.sempty{padding:16px;border-radius:14px;background:var(--soft);text-align:center}
+.gst{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;margin-top:8px}
+.gst p{flex:1;margin:0}.gst .si{width:34px;height:34px;border-radius:10px}.gst .si svg{width:17px;height:17px}
+.badge{display:flex;gap:12px;align-items:flex-start}
+.badge .medal{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--soft);color:var(--muted)}
+.badge .medal svg{width:22px;height:22px}
+.badge.got{border-color:light-dark(#86efac,#2f6a43);background:light-dark(#f7fef9,#10241a)}
+.badge.got .medal{background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff}
+@container (max-width:760px){.sus .skpi{flex-direction:column;align-items:flex-start;gap:8px}.sus .skpi .si{width:36px;height:36px}}
