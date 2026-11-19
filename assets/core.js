@@ -70,7 +70,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 6, seq: 0,
+      demo: true, version: 7, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -85,6 +85,11 @@ function createCore(store) {
         { id: 'caf', name: 'Main Cafeteria', x: 80, y: 46 },
         { id: 'bus', name: 'Business Building', x: 16, y: 74 },
         { id: 'sci', name: 'Science Building', x: 82, y: 82 },
+        { id: 'sja', name: 'SJA Cafeteria', x: 48, y: 52 },
+        { id: 'sjb', name: 'SJB Cafeteria', x: 50, y: 12 },
+        { id: 'sjc', name: 'SJC Cafeteria', x: 12, y: 18 },
+        { id: 'sjd', name: 'SJD Cafeteria', x: 16, y: 74 },
+        { id: 'sje', name: 'SJE Cafeteria', x: 80, y: 46 },
       ],
       users: [
         { id: 's1', role: 'student', name: 'Aisha', full: 'Aisha Rahman' },
@@ -99,11 +104,11 @@ function createCore(store) {
         { userId: 'r3', outletId: 'fresh', role: 'owner' }, { userId: 'r3', outletId: 'pizza', role: 'owner' }, { userId: 'r3', outletId: 'sand', role: 'owner' },
       ],
       outlets: [
-        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'stc', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 2, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true },
-        { id: 'fresh', name: 'Fresh Bites', cuisine: 'Salads & healthy', building: 'lib', open: '08:00', close: '17:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 1, desc: 'Salads, grain bowls and smoothies.', color: '#16a34a', reusable: true },
-        { id: 'pizza', name: 'Pizza Corner', cuisine: 'Pizza & pasta', building: 'caf', open: '11:00', close: '20:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Stone-baked personal pizzas and pasta.', color: '#ea580c', reusable: false },
-        { id: 'sand', name: 'Sandwich Hub', cuisine: 'Sandwiches & wraps', building: 'eng', open: '07:00', close: '16:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 2, desc: 'Toasted sandwiches and wraps, made fast.', color: '#ca8a04', reusable: false },
-        { id: 'coffee', name: 'Coffee Station', cuisine: 'Coffee & pastries', building: 'bus', open: '07:00', close: '19:00', status: 'open', parallel: 2, capacityPerSlot: 10, baseline: 3, desc: 'Coffee, tea and baked goods.', color: '#7c3aed', reusable: true },
+        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'sja', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 2, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true },
+        { id: 'fresh', name: 'Fresh Bites', cuisine: 'Salads & healthy', building: 'sjb', open: '08:00', close: '17:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Salads, grain bowls and smoothies.', color: '#16a34a', reusable: true },
+        { id: 'pizza', name: 'Pizza Corner', cuisine: 'Pizza & pasta', building: 'sje', open: '11:00', close: '20:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Stone-baked personal pizzas and pasta.', color: '#ea580c', reusable: false },
+        { id: 'sand', name: 'Sandwich Hub', cuisine: 'Sandwiches & wraps', building: 'sjc', open: '07:00', close: '16:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 3, desc: 'Toasted sandwiches and wraps, made fast.', color: '#ca8a04', reusable: false },
+        { id: 'coffee', name: 'Coffee Station', cuisine: 'Coffee & pastries', building: 'sjd', open: '07:00', close: '19:00', status: 'open', parallel: 2, capacityPerSlot: 10, baseline: 3, desc: 'Coffee, tea and baked goods.', color: '#7c3aed', reusable: true },
       ],
       items: [],
       stations: [
@@ -196,7 +201,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 6) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 7) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

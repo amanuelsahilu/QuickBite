@@ -44,7 +44,7 @@ const WORDMARK = '<span class="sr">QuickBite</span>' + LOGO + '<span aria-hidden
 // illustrated plates (generic food illustrations, drawn here)
 function art(cat, color, big) {
   const c = color || '#0d9488';
-  const plate = '<rect width="100" height="100" fill="' + c + '22"/><circle cx="50" cy="56" r="34" fill="#fff" opacity=".9"/><circle cx="50" cy="56" r="27" fill="' + c + '18"/>';
+  const plate = (big ? '' : '<rect width="100" height="100" fill="' + c + '22"/>') + '<circle cx="50" cy="56" r="34" fill="#fff" opacity=".9"/><circle cx="50" cy="56" r="27" fill="' + c + '18"/>';
   const f = {
     bowl: '<path d="M24 52h52a26 22 0 0 1-52 0z" fill="#f8fafc" stroke="' + c + '" stroke-width="3"/><circle cx="40" cy="48" r="7" fill="#f59e0b"/><circle cx="54" cy="45" r="6" fill="#22c55e"/><circle cx="62" cy="50" r="5" fill="#ef4444"/><path d="M30 50q20-10 40 0" stroke="#fde68a" stroke-width="5" fill="none"/>',
     wrap: '<path d="M28 66l30-34 14 12-30 34z" fill="#fcd9a8" stroke="#d97706" stroke-width="2.5"/><path d="M58 32l14 12-6 3-11-11z" fill="#22c55e"/><circle cx="60" cy="40" r="3" fill="#ef4444"/>',
@@ -54,7 +54,7 @@ function art(cat, color, big) {
     drink: '<path d="M38 34h24l-3 40H41z" fill="#f8fafc" stroke="' + c + '" stroke-width="3"/><path d="M40 46h20l-2 26H42z" fill="#a16207" opacity=".75"/><path d="M52 34l6-12" stroke="' + c + '" stroke-width="3"/>',
     pastry: '<path d="M28 62q22-34 44 0q-22 10-44 0z" fill="#f59e0b" stroke="#b45309" stroke-width="2.5"/><path d="M40 52l4 10M50 47v14M60 52l-4 10" stroke="#b45309" stroke-width="2"/>',
   }[cat] || '';
-  return '<div class="art' + (big ? ' lg' : '') + '"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(cat) + ' illustration">' + plate + f + '</svg></div>';
+  return '<div class="art' + (big ? ' lg' : '') + '"' + (big ? ' style="--tint:' + c + '22"' : '') + '><svg viewBox="0 0 100 100" preserveAspectRatio="' + (big ? 'xMidYMid meet' : 'xMidYMid slice') + '" role="img" aria-label="' + esc(cat) + ' illustration">' + plate + f + '</svg></div>';
 }
 function pseudoQR(token) { // visual only — not a scannable QR code
   let h = 0; for (const ch of token) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -71,7 +71,7 @@ function pseudoQR(token) { // visual only — not a scannable QR code
 const STATUS = { submitted: ['Submitted', 'n'], accepted: ['Accepted', 'g'], preparing: ['Preparing', 'a'], ready: ['Ready', 'g'], collected: ['Collected', 'n'], completed: ['Completed', ''], rejected: ['Rejected', 'r'], cancelled: ['Cancelled', 'r'], no_show: ['Not collected', 'r'] };
 const stChip = s => '<span class="chip ' + (STATUS[s] || ['', ''])[1] + '">' + esc((STATUS[s] || [s])[0]) + '</span>';
 const payChip = p => '<span class="chip x">' + esc({ sim_authorised: 'Payment held', sim_captured: 'Paid', sim_voided: 'Voided' }[p] || p) + '</span>';
-const lvlChip = l => '<span class="chip ' + ({ short: 'g', moderate: 'a', busy: 'r', closed: 'x' }[l]) + '">' + ({ short: 'Short', moderate: 'Moderate', busy: 'Busy', closed: 'Closed' }[l]) + '</span>';
+const lvlChip = l => '<span class="chip ' + ({ short: 'g', moderate: 'y', busy: 'r', closed: 'x' }[l]) + '">' + ({ short: 'Not busy', moderate: 'Moderate', busy: 'Busy', closed: 'Closed' }[l]) + '</span>';
 function outletRating(id) { const S = C.S; const r = S.reviews.filter(x => x.outletId === id).map(x => x.rating).concat(S.history.filter(h => h.outletId === id && h.rating).map(h => h.rating)); return r.length ? { avg: Math.round(r.reduce((a, b) => a + b, 0) / r.length * 10) / 10, n: r.length } : null; }
 const stars = r => r ? '<span class="nowrap">' + '★ ' + r.avg + ' <span class="muted small">(' + r.n + ')</span></span>' : '<span class="muted small">No ratings yet</span>';
 

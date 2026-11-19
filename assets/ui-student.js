@@ -53,25 +53,24 @@ const STU_VIEWS = {
 
   marketplace(sf) {
     const q = (sf.q || '').toLowerCase(); const cat = sf.cat || ''; const fav = sf.favOnly; const prof = C.S.profiles[sf.user];
-    const br = C.nextBreak(sf.user); const from = br.from || 'stc';
     let outs = C.S.outlets.filter(o => !fav || prof.favOutlets.includes(o.id)).filter(o => !q || o.name.toLowerCase().includes(q) || o.cuisine.toLowerCase().includes(q) || C.S.items.some(i => i.outletId === o.id && i.name.toLowerCase().includes(q))).filter(o => !cat || C.S.items.some(i => i.outletId === o.id && i.cat === cat));
-    const dishes = (q || cat) ? C.S.items.filter(i => (!q || i.name.toLowerCase().includes(q) || i.tags.join(' ').toLowerCase().includes(q)) && (!cat || i.cat === cat)) : [];
+    const dishes = (q || cat || fav) ? C.S.items.filter(i => (!q || i.name.toLowerCase().includes(q) || i.tags.join(' ').toLowerCase().includes(q)) && (!cat || i.cat === cat) && (!fav || prof.favItems.includes(i.id))) : [];
     return '<h1>Marketplace</h1>' +
-      '<div class="tog" style="margin:8px 0" role="group" aria-label="Category"><button data-a="cat" data-c="" aria-pressed="' + !cat + '">All</button>' + CATS.map(c => '<button data-a="cat" data-c="' + c[0] + '" aria-pressed="' + (cat === c[0]) + '">' + c[1] + '</button>').join('') + '<button data-a="favOnly" aria-pressed="' + !!fav + '">' + ic('heart') + ' Favourites</button></div>' +
+      '<div class="tog" style="margin:8px 0" role="group" aria-label="Category"><button data-a="cat" data-c="" aria-pressed="' + !cat + '">All</button>' + CATS.map(c => '<button data-a="cat" data-c="' + c[0] + '" aria-pressed="' + (cat === c[0]) + '">' + c[1] + '</button>').join('') + '<button data-a="favOnly" aria-pressed="' + !!fav + '">' + ic('heart', fav) + ' Favourites</button></div>' +
       (q ? '<p>Results for “' + esc(sf.q) + '” <button class="btn sm" data-a="clearq">Clear</button></p>' : '') +
-      (dishes.length ? '<h2>Dishes</h2><div class="grid gauto" style="margin-bottom:18px">' + dishes.map(i => dishCard(sf, i)).join('') + '</div><h2>Restaurants</h2>' : '') +
-      (outs.length ? '<div class="grid gauto">' + outs.map(o => { const qi = C.queueInfo(o.id); const w = C.walk(from, o.building); return '<div class="card">' + art(C.S.items.find(i => i.outletId === o.id).cat, o.color, true) +
-        '<div class="row between" style="margin-top:10px"><h3 style="margin:0">' + esc(o.name) + '</h3><button class="ib" style="border:0" data-a="fav" data-k="outlet" data-id="' + o.id + '" aria-label="Favourite ' + esc(o.name) + '" aria-pressed="' + prof.favOutlets.includes(o.id) + '">' + ic('heart', prof.favOutlets.includes(o.id)) + '</button></div>' +
-        '<div class="small muted">' + esc(o.cuisine) + ' · ' + esc(bName(o.building)) + ' · ' + stars(outletRating(o.id)) + '</div>' +
-        '<div class="row small" style="margin:8px 0">' + lvlChip(qi.level) + '<span>' + (qi.open ? 'Walk ' + w + ' · queue ' + qi.wait + ' · prep ~' + qi.avgPrep + ' · total ~' + (Math.max(w, qi.wait + qi.avgPrep)) + ' min' : esc(qi.label)) + '</span></div>' +
-        '<button class="btn p" style="width:100%" data-a="go" data-r="outlet" data-id="' + o.id + '">View menu</button></div>'; }).join('') + '</div>' : '<div class="empty">No restaurants match. ' + (fav ? 'You have no favourite restaurants yet.' : '') + '</div>') +
+      (dishes.length ? '<h2 style="margin-top:14px">' + (fav && !q && !cat ? 'Favourite dishes' : 'Dishes') + '</h2><div class="grid gauto" style="margin-bottom:18px">' + dishes.map(i => dishCard(sf, i)).join('') + '</div><h2>' + (fav && !q && !cat ? 'Favourite restaurants' : 'Restaurants') + '</h2>' : '') +
+      (outs.length ? '<div class="grid gauto">' + outs.map(o => { const qi = C.queueInfo(o.id); const faved = prof.favOutlets.includes(o.id); return '<div class="card rcard">' + art(C.S.items.find(i => i.outletId === o.id).cat, o.color, true) +
+        '<div class="rbody"><div class="row between" style="gap:8px"><h3 style="margin:0">' + esc(o.name) + '</h3><button class="ib fav" data-a="fav" data-k="outlet" data-id="' + o.id + '" aria-label="Favourite ' + esc(o.name) + '" aria-pressed="' + faved + '">' + ic('heart', faved) + '</button></div>' +
+        '<div class="small muted">' + esc(o.cuisine) + ' · ' + esc(bName(o.building)) + '</div>' +
+        '<div class="row between" style="margin:10px 0 12px">' + lvlChip(qi.level) + '<span class="small rstar">' + stars(outletRating(o.id)) + '</span></div>' +
+        '<button class="btn p" style="width:100%" data-a="go" data-r="outlet" data-id="' + o.id + '">View menu</button></div></div>'; }).join('') + '</div>' : '<div class="empty">No restaurants match. ' + (fav ? 'You have no favourite restaurants yet.' : '') + '</div>') +
       '';
   },
 
   outlet(sf) {
     const o = C.outlet(sf.p.id); const qi = C.queueInfo(o.id); const items = C.S.items.filter(i => i.outletId === o.id);
     return '<div class="crumb"><button data-a="go" data-r="marketplace">← Marketplace</button></div><div class="row between"><div><h1 style="margin:0">' + esc(o.name) + '</h1><p class="muted">' + esc(o.desc) + ' · ' + esc(bName(o.building)) + ' · ' + o.open + '–' + o.close + ' weekdays</p></div>' + lvlChip(qi.level) + '</div>' +
-      '<div class="card row small" style="margin-bottom:14px"><span><b>' + esc(qi.label) + '</b></span><span>Queue: ' + qi.count + ' orders · ~' + qi.wait + ' min</span><span>Typical prep ~' + qi.avgPrep + ' min</span><span class="muted">' + esc(qi.source) + '</span></div>' +
+      '<div class="card row small" style="margin-bottom:14px"><span><b>' + esc(qi.label) + '</b></span><span>Queue: ' + qi.count + ' orders · ~' + qi.wait + ' min</span><span>Typical prep ~' + qi.avgPrep + ' min</span></div>' +
       '<div class="grid gauto">' + items.map(i => dishCard(sf, i)).join('') + '</div>';
   },
 
@@ -208,7 +207,9 @@ const STU_VIEWS = {
   map(sf) {
     const S = C.S; const sel = sf.mapSel;
     const B = id => S.buildings.find(b => b.id === id);
-    let marks = S.buildings.map(b => '<g><rect x="' + (b.x - 9) + '" y="' + (b.y - 6) + '" width="18" height="12" rx="2" fill="var(--card)" stroke="var(--line)" stroke-width=".5"/><text x="' + b.x + '" y="' + (b.y + 10) + '" font-size="3" text-anchor="middle" fill="var(--muted)">' + esc(b.name) + '</text></g>').join('');
+    // a cafeteria can share a spot with a building, so list every name at that spot on its own line
+    const spots = {}; S.buildings.forEach(b => (spots[b.x + ',' + b.y] = spots[b.x + ',' + b.y] || []).push(b));
+    let marks = Object.values(spots).map(g => { const b = g[0]; return '<g><rect x="' + (b.x - 9) + '" y="' + (b.y - 6) + '" width="18" height="12" rx="2" fill="var(--card)" stroke="var(--line)" stroke-width=".5"/>' + g.map((x, i) => '<text x="' + b.x + '" y="' + (b.y + 10 + i * 3.6) + '" font-size="3" text-anchor="middle" fill="var(--muted)">' + esc(x.name) + '</text>').join('') + '</g>'; }).join('');
     const pin = (x, y, c, k, id, label, shape) => '<g style="cursor:pointer" data-a="mapSel" data-k="' + k + '" data-id="' + id + '" role="button" aria-label="' + esc(label) + '">' + (shape === 'sq' ? '<rect x="' + (x - 2.2) + '" y="' + (y - 2.2) + '" width="4.4" height="4.4" rx="1" fill="' + c + '" stroke="#fff" stroke-width=".6"/>' : '<circle cx="' + x + '" cy="' + y + '" r="2.4" fill="' + c + '" stroke="#fff" stroke-width=".6"/>') + '</g>';
     S.outlets.forEach((o, i) => { const b = B(o.building); marks += pin(b.x - 5 + i % 2 * 3, b.y - 1, o.color, 'outlet', o.id, o.name); });
     S.stations.forEach(s => { const b = B(s.building); marks += pin(b.x + 5, b.y - 1, '#0f2a43', 'station', s.id, s.name, 'sq'); });
@@ -236,7 +237,7 @@ function dishCard(sf, i) {
     '<div class="chips" style="margin:8px 0">' + i.tags.map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
     '<div class="small">' + (i.allergens ? 'Contains: ' + (i.allergens.length ? esc(i.allergens.join(', ')) : 'no major allergens declared') : '<span style="color:var(--amber);font-weight:700">Allergens not declared — ask the outlet</span>') + '</div>' +
     (d.block.length || d.warn.length ? '<div class="warn" style="margin-top:6px;padding:6px 10px">' + d.block.concat(d.warn).map(esc).join('<br>') + '</div>' : '') +
-    '<div class="row" style="margin-top:10px">' + (unavailable ? '<span class="chip r">' + (i.status === 'unavailable' ? 'Unavailable' : 'Sold out') + '</span>' : '<button class="btn p sm" data-a="add" data-id="' + i.id + '">Add to cart</button>') + '<button class="btn sm" data-a="itemInfo" data-id="' + i.id + '">Details</button><button class="ib" style="border:0;height:36px" data-a="fav" data-k="item" data-id="' + i.id + '" aria-label="Favourite ' + esc(i.name) + '" aria-pressed="' + prof.favItems.includes(i.id) + '">' + ic('heart', prof.favItems.includes(i.id)) + '</button></div></div>';
+    '<div class="row" style="margin-top:10px">' + (unavailable ? '<span class="chip r">' + (i.status === 'unavailable' ? 'Unavailable' : 'Sold out') + '</span>' : '<button class="btn p sm" data-a="add" data-id="' + i.id + '">Add to cart</button>') + '<button class="btn sm" data-a="itemInfo" data-id="' + i.id + '">Details</button><button class="ib fav" style="height:36px" data-a="fav" data-k="item" data-id="' + i.id + '" aria-label="Favourite ' + esc(i.name) + '" aria-pressed="' + prof.favItems.includes(i.id) + '">' + ic('heart', prof.favItems.includes(i.id)) + '</button></div></div>';
 }
 const STU_MODALS = {
   item(sf, m) {
