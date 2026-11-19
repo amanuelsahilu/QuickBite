@@ -241,3 +241,29 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .excl summary{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-weight:700;cursor:pointer;list-style:none}
 .excl summary::-webkit-details-marker{display:none}
 .excl .hd,.excl[open] .sh{display:none}.excl[open] .hd{display:inline}
+/* class schedule refresh: vertical timeline */
+.sched{padding:10px 18px;position:relative}
+.cls{display:grid;grid-template-columns:52px 18px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 0;position:relative}
+.sched>.cls::before,.sched>.brk::before{content:"";position:absolute;left:73px;top:0;bottom:0;width:2px;background:var(--line)}
+.sched>.cls:first-child::before{top:50%}.sched>.cls:last-child::before{bottom:50%}
+.cls .ct{display:flex;flex-direction:column;line-height:1.25}.cls .ct b{font-size:15px}
+.cls .cd{width:14px;height:14px;border-radius:50%;background:var(--card);border:3px solid var(--teal);position:relative;z-index:1;justify-self:center}
+.cls .cb{display:flex;flex-direction:column;gap:3px;padding:10px 14px;border-radius:14px;background:light-dark(#f4f8f8,#14222a);border-left:4px solid var(--teal)}
+.cls .cb b{font-size:15px}.cls .cb .small{display:inline-flex;align-items:center;gap:5px}.cls .cb svg{width:14px;height:14px;flex:none}
+.cls .ca{display:flex;gap:6px}
+.brk{display:grid;grid-template-columns:52px 18px minmax(0,1fr) auto;align-items:center;gap:12px;position:relative;margin:2px 0}
+.brk .bt{grid-column:2;justify-self:center;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accsoft);color:var(--teal);position:relative;z-index:1}
+.brk .bt svg{width:15px;height:15px}
+.brk .bb{grid-column:3;padding:10px 14px;border:1.5px dashed light-dark(#99d5cc,#285a55);border-radius:14px;background:var(--accsoft)}
+.brk .ba{grid-column:4}
+.cform h3{margin:0 0 4px}.cform .btn.p{min-width:140px}
+@container (max-width:760px){
+ .cls,.brk{grid-template-columns:44px 14px minmax(0,1fr)}
+ .sched>.cls::before,.sched>.brk::before{left:64px}
+ .cls .ca,.brk .ba{grid-column:3}
+ .cls .ca{justify-content:flex-start}
+}
+.cls .cb{text-align:left;align-items:flex-start}
+.cls,.brk{grid-template-columns:52px 18px minmax(0,1fr) 150px}
+.cls .ca{justify-content:flex-end}.brk .ba{justify-self:end}
+@container (max-width:760px){.cls,.brk{grid-template-columns:44px 14px minmax(0,1fr)}.cls .ca{justify-content:flex-start}.brk .ba{justify-self:start}}
