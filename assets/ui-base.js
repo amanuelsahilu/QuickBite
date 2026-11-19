@@ -110,7 +110,7 @@ function renderSurface(sf) {
   const cartN = stu ? C.cart(sf.user).lines.reduce((a, l) => a + l.qty, 0) : 0;
   const mine = stu ? [] : C.myOutlets(sf.user);
   const top = '<header class="top">' +
-    '<span class="brand">' + LOGO + '<span class="sr">QuickBite</span></span>' +
+    '<button class="brand hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + LOGO + '</button>' +
     '<form data-form="search" role="search">' + ic('search') + '<label class="sr" for="q-' + sf.id + '">Search</label><input type="search" id="q-' + sf.id + '" name="q" placeholder="' + (stu ? 'Search food or vendors' : 'Search your menu') + '" value="' + esc(sf.q || '') + '"></form>' +
     (stu ? '<button class="pts" data-a="go" data-r="rewards" title="Green Points">' + ic('leaf') + '<span class="num">' + C.balance(sf.user) + '</span><span class="sr"> Green Points</span></button>' +
       '<button class="ib" data-a="go" data-r="cart" aria-label="Cart, ' + cartN + ' items">' + ic('cart') + (cartN ? '<span class="dot">' + cartN + '</span>' : '') + '</button>'
@@ -119,7 +119,7 @@ function renderSurface(sf) {
     '<button class="ib" data-a="notifs" aria-label="Notifications, ' + unread + ' unread">' + ic('bell') + (unread ? '<span class="dot">' + unread + '</span>' : '') + '</button>' +
     '<button class="ib hidem" data-a="' + (stu ? 'go' : 'account') + '" data-r="profile" aria-label="Account">' + ic('user') + '</button>' +
     '</header>';
-  const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><span class="brand wm">' + WORDMARK + '</span>' +
+  const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><button class="brand wm hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + WORDMARK + '</button>' +
     nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
     '<div class="role"><b>' + esc(u.name) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name + ' (' + o.role + ')').join(', '))) + '</span></div></aside>';
   const mt = '<nav class="mtabs" aria-label="Primary">' + tabs.map(t => '<button data-a="' + (t[0] === 'more' ? 'more' : 'go') + '" data-r="' + t[0] + '"' + (sf.route === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2]) + t[1] + '</button>').join('') + '</nav>';
