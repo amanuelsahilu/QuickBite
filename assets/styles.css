@@ -267,3 +267,22 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .cls,.brk{grid-template-columns:52px 18px minmax(0,1fr) 150px}
 .cls .ca{justify-content:flex-end}.brk .ba{justify-self:end}
 @container (max-width:760px){.cls,.brk{grid-template-columns:44px 14px minmax(0,1fr)}.cls .ca{justify-content:flex-start}.brk .ba{justify-self:start}}
+/* dietary profile refresh */
+.dietf .dsec{padding:16px 0;border-bottom:1px solid var(--line)}.dietf .dsec:first-child{padding-top:2px}
+.dietf h3{display:flex;align-items:center;gap:8px;margin:0 0 12px}.dietf h3 svg{width:18px;height:18px;color:var(--teal)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{position:relative;display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);font-weight:600;font-size:14px;cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.pill input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.pill span::before{content:"+";display:inline-block;width:14px;margin-right:4px;font-weight:800;color:var(--muted)}
+.pill:hover{border-color:var(--teal)}
+.pill:has(input:checked){background:var(--teal);border-color:var(--teal);color:#fff}
+.pill:has(input:checked) span::before{content:"✓";color:#fff}
+.pill.al:has(input:checked){background:light-dark(#fee2e2,#3b1616);border-color:var(--red);color:var(--red)}
+.pill.al:has(input:checked) span::before{color:var(--red)}
+.pill:has(input:focus-visible){outline:2px solid var(--teal);outline-offset:2px}
+.dietf .sliders{border-bottom:0;padding-bottom:0}
+.dietf .sliders .f{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.dietf .sliders output{background:var(--accsoft);color:var(--teal);font-weight:800;padding:3px 10px;border-radius:99px}
+.dprev h3{display:flex;align-items:center;gap:8px}.dprev h3 svg{width:18px;height:18px;color:var(--teal)}
+.dprev .food{padding:12px 0;border-bottom:1px solid var(--line);margin:0}
+.dprev .btn{margin-top:14px}

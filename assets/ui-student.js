@@ -95,7 +95,7 @@ const STU_VIEWS = {
       '<div class="row" style="margin-bottom:10px"><button class="cb" data-a="late" aria-pressed="' + !!sf.late + '" style="' + (sf.late ? 'background:var(--sel);color:var(--selink)' : '') + '">' + ic('clock') + ' Running Late mode: ' + (sf.late ? 'on' : 'off') + '</button><span class="small muted">' + (sf.late ? 'No time to eat: order, pick up and head straight to class.' : 'Allows ' + C.S.config.timing.eatBufferMin + ' min to eat.') + '</span></div>' +
       (rec.avail == null ? '' : '<p class="small">You have <b>' + rec.avail + ' min</b> before ' + esc(rec.break.next ? rec.break.next.name + ' at ' + rec.break.next.start + ' in ' + bName(rec.break.next.building) : 'your next class') + '.</p>') +
       (top ? '<h2>Best option for your next break</h2>' + recCard(sf, top, rec, true) + (rec.list.length > 1 ? '<h2 style="margin-top:18px">Alternatives</h2><div class="grid g2">' + rec.list.slice(1, 7).map(r => recCard(sf, r, rec, false)).join('') + '</div>' : '')
-        : '<div class="card"><h2>Nothing fits right now</h2><p>No option meets your time, budget, dietary and allergy rules' + ((sort === 'healthiest' || sort === 'protein') ? ' with supplied nutrition data' : '') + '. We will not suggest something that might make you late or that is not confirmed safe for your allergies.</p><button class="btn" data-a="go" data-r="diet">Review dietary profile</button></div>') +
+        : '<div class="card"><h2>Nothing fits right now</h2><p>No option meets your time, budget, dietary and allergy rules' + ((sort === 'healthiest' || sort === 'protein') ? ' with supplied nutrition data' : '') + '. We will not suggest something that might make you late or that is not confirmed safe for your allergies.</p></div>') +
       (rec.excluded.length ? '<details class="excl"><summary><span class="sh">Show excluded items</span><span class="hd">Hide excluded items</span></summary><div class="grid g2" style="margin-top:12px">' + rec.excluded.map(exclCard).join('') + '</div></details>' : '');
   },
 
@@ -122,14 +122,17 @@ const STU_VIEWS = {
 
   diet(sf) {
     const p = C.S.profiles[sf.user]; const rec = C.recommend(sf.user, {});
-    return '<h1>Dietary profile</h1>' +
-      '<form data-form="diet" class="grid g2" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)"><div class="card"><h3>Preferences</h3><div class="chips">' + C.PREFS.map(x => '<label class="cb"><input type="checkbox" name="prefs" value="' + x + '"' + (p.prefs.includes(x) ? ' checked' : '') + '>' + x + (C.HARD_PREFS.includes(x) ? '' : '') + '</label>').join('') + '</div>' +
-      '' +
-      '<h3 style="margin-top:14px">Allergies</h3><div class="chips">' + C.ALLERGENS.map(x => '<label class="cb"><input type="checkbox" name="allergies" value="' + x + '"' + (p.allergies.includes(x) ? ' checked' : '') + '>' + x + '</label>').join('') + '</div>' +
+    const pill = (name, x, on, cls) => '<label class="pill' + (cls ? ' ' + cls : '') + '"><input type="checkbox" name="' + name + '" value="' + x + '"' + (on ? ' checked' : '') + '><span>' + x + '</span></label>';
+    return '<div class="crumb"><button data-a="go" data-r="profile">← Profile</button></div><h1>Dietary profile</h1>' +
+      '<form data-form="diet" class="grid g2 dietf" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)"><div class="card">' +
+      '<section class="dsec"><h3>' + ic('leaf') + 'Preferences</h3><div class="pills">' + C.PREFS.map(x => pill('prefs', x, p.prefs.includes(x))).join('') + '</div></section>' +
+      '<section class="dsec"><h3>' + ic('diet') + 'Allergies</h3><div class="pills">' + C.ALLERGENS.map(x => pill('allergies', x, p.allergies.includes(x), 'al')).join('') + '</div></section>' +
+      '<section class="dsec sliders">' +
       '<label class="f" for="bud-' + sf.id + '">Meal budget: <output>' + aed(p.budget) + '</output></label><input type="range" id="bud-' + sf.id + '" name="budget" min="10" max="80" step="1" value="' + (p.budget || 35) + '" oninput="this.previousElementSibling.firstElementChild.textContent=\'AED \'+this.value">' +
       '<label class="f" for="brk-' + sf.id + '">Typical break length: <output>' + (p.breakLen || 30) + ' min</output></label><input type="range" id="brk-' + sf.id + '" name="breakLen" min="10" max="90" step="5" value="' + (p.breakLen || 30) + '" oninput="this.previousElementSibling.firstElementChild.textContent=this.value+\' min\'">' +
-      '<button class="btn p" style="margin-top:14px">Save profile</button></div>' +
-      '<div class="card"><h3>Recommendation preview</h3>' + (rec.list.slice(0, 3).map(r => '<div class="food" style="margin:10px 0">' + art(r.item.cat, r.outlet.color) + '<div><b>' + esc(r.item.name) + '</b><br>' + diningLine(r) + '</div></div>').join('') || '<p class="muted">No item currently fits.</p>') + '<button type="button" class="btn" data-a="go" data-r="ai">See all recommendations</button></div></form>';
+      '</section>' +
+      '<button class="btn p" style="margin-top:16px">Save profile</button></div>' +
+      '<div class="card dprev"><h3>' + ic('spark') + 'Recommendation preview</h3>' + (rec.list.slice(0, 3).map(r => '<div class="food">' + art(r.item.cat, r.outlet.color) + '<div><b>' + esc(r.item.name) + '</b><br>' + diningLine(r) + '</div></div>').join('') || '<p class="muted">No item currently fits.</p>') + '<button type="button" class="btn" data-a="go" data-r="ai">See all recommendations</button></div></form>';
   },
 
   cart(sf) {

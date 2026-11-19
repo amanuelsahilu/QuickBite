@@ -88,7 +88,7 @@ const APP = {
     main: { id: 'main', user: 's1', route: 'dashboard', p: {} },
   },
 };
-const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['diet', 'Dietary Profile', 'diet'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
+const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
 const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf']];
 const STU_TABS = [['dashboard', 'Home', 'home'], ['marketplace', 'Food', 'store'], ['ai', 'Picks', 'spark'], ['orders', 'Orders', 'bag'], ['more', 'More', 'menu']];
 const RES_TABS = [['rdash', 'Home', 'home'], ['rorders', 'Orders', 'list'], ['rmenu', 'Menu', 'store'], ['rsales', 'Sales', 'chart'], ['more', 'More', 'menu']];
@@ -118,7 +118,7 @@ function renderSurface(sf) {
     '<button class="ib hidem" data-a="' + (stu ? 'go' : 'account') + '" data-r="profile" aria-label="Account">' + ic('user') + '</button>' +
     '</header>';
   const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><button class="brand wm hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + WORDMARK + '</button>' +
-    nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
+    nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') || (n[0] === 'profile' && sf.route === 'diet') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
     '<div class="role"><b>' + esc(u.name) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name + ' (' + o.role + ')').join(', '))) + '</span></div></aside>';
   const mt = '<nav class="mtabs" aria-label="Primary">' + tabs.map(t => '<button data-a="' + (t[0] === 'more' ? 'more' : 'go') + '" data-r="' + t[0] + '"' + (sf.route === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2]) + t[1] + '</button>').join('') + '</nav>';
   const modal = sf.modal ? '<div class="modal" data-a="closeBg" role="dialog" aria-modal="true"><div class="mbox">' + renderModal(sf) + '</div></div>' : '';
