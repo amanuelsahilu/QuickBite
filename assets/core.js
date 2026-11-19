@@ -72,7 +72,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 9, seq: 0,
+      demo: true, version: 10, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -91,6 +91,8 @@ function createCore(store) {
         { id: 'sjc', name: 'SJC Cafeteria', x: 12, y: 18 },
         { id: 'sjd', name: 'SJD Cafeteria', x: 16, y: 74 },
         { id: 'sje', name: 'SJE Cafeteria', x: 80, y: 46 },
+        { id: 'sjaa', name: 'SJA Activity Center', x: 30, y: 38 },
+        { id: 'sjba', name: 'SJB Activity Center', x: 70, y: 24 },
       ],
       users: [
         { id: 's1', role: 'student', name: 'Aisha', full: 'Aisha Rahman' },
@@ -113,10 +115,10 @@ function createCore(store) {
       ],
       items: [],
       stations: [
-        { id: 'st-eng', name: 'SJC Cafeteria station', building: 'sjc', hours: '07:00–18:00', state: 'operational', comps: 8 },
         { id: 'st-stc', name: 'SJA Cafeteria station', building: 'sja', hours: '07:00–20:00', state: 'operational', comps: 12 },
-        { id: 'st-lib', name: 'SJB Cafeteria station', building: 'sjb', hours: '08:00–18:00', state: 'operational', comps: 8 },
-        { id: 'st-caf', name: 'SJE Cafeteria station', building: 'sje', hours: '07:00–20:00', state: 'maintenance', comps: 8 },
+        { id: 'st-lib', name: 'SJB Cafeteria station', building: 'sjb', hours: '07:00–20:00', state: 'operational', comps: 10 },
+        { id: 'st-sjaa', name: 'SJA Activity Center station', building: 'sjaa', hours: '08:00–18:00', state: 'operational', comps: 8 },
+        { id: 'st-sjba', name: 'SJB Activity Center station', building: 'sjba', hours: '08:00–18:00', state: 'operational', comps: 8 },
       ],
       compartments: [],
       greenStations: [{ id: 'gs1', name: 'Smart Green Station — SJA Cafeteria', building: 'sja', code: 'GS-SJA-01' }, { id: 'gs2', name: 'Smart Green Station — SJB Cafeteria', building: 'sjb', code: 'GS-SJB-01' }],
@@ -211,7 +213,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 9) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 10) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

@@ -180,18 +180,6 @@ const STU_VIEWS = {
       '<details style="margin-top:14px"><summary>Status history</summary><div class="list small">' + o.events.map(e => '<div>' + dayTime(e.at) + ' · <b>' + esc(e.s) + '</b>' + (e.note ? ' — ' + esc(e.note) : '') + '</div>').join('') + '</div></details>';
   },
 
-  stations(sf) {
-    const S = C.S; const comps = S.compartments; const free = comps.filter(c => c.state === 'free').length;
-    return '<h1>Pickup stations</h1>' +
-      '<div class="grid g4 kp" style="margin:14px 0">' + [['Stations', S.stations.length], ['Compartments', comps.length], ['Available now', free], ['Operational', S.stations.filter(s => s.state === 'operational').length + ' of ' + S.stations.length]].map(k => '<div class="card kpi"><div class="l">' + k[0] + '</div><div class="v num">' + k[1] + '</div></div>').join('') + '</div>' +
-      '<div class="grid g2">' + S.stations.map(s => { const cs = comps.filter(c => c.stationId === s.id); const occ = cs.filter(c => c.state !== 'free').length; return '<div class="card"><div class="row between"><h3 style="margin:0">' + esc(s.name) + '</h3><span class="chip ' + ({ operational: 'g', maintenance: 'a', offline: 'r' }[s.state]) + '">' + s.state + '</span></div><p class="small muted">' + esc(bName(s.building)) + ' · ' + s.hours + '</p>' +
-        '<div class="row between small"><span>' + (cs.length - occ) + ' free · ' + occ + ' occupied</span><span>' + Math.round(occ / cs.length * 100) + '% used</span></div><div class="bar" style="margin:6px 0 10px"><i style="width:' + occ / cs.length * 100 + '%"></i></div>' +
-        '<div class="comps">' + cs.map(c => '<i class="' + (c.state === 'free' ? 'free' : c.state === 'reserved' ? 'res' : 'occ') + '" title="Compartment ' + c.n + ': ' + c.state + '">' + c.n + '</i>').join('') + '</div>' +
-        '</div>'; }).join('') + '</div>' +
-      '<div class="card" style="margin-top:14px"><h3>How collection works (concept)</h3><p class="small">1. Choose a station at checkout — a compartment is reserved. 2. The restaurant places your meal and confirms. 3. You get a notification. 4. Your one-time code opens the compartment. 5. Capacity is released.</p></div>' +
-      '';
-  },
-
   sustain(sf) {
     const L = C.S.ledger.filter(l => l.userId === sf.user); const ev = C.S.evidence.filter(e => e.userId === sf.user);
     const cnt = t => L.filter(l => l.type === t && l.delta > 0).length; const orders = C.myOrders(sf.user).filter(o => o.status === 'completed');
@@ -226,7 +214,7 @@ const STU_VIEWS = {
     S.stations.forEach(s => { const b = B(s.building); marks += pin(b.x + 5, b.y - 1, '#0f2a43', 'station', s.id, s.name, 'sq'); });
     S.greenStations.forEach(g => { const b = B(g.building); marks += pin(b.x + 5, b.y + 3.5, '#16a34a', 'green', g.id, g.name); });
     let det = '<p class="muted">Select a pin to see details.</p>';
-    if (sel) { if (sel.k === 'outlet') { const o = C.outlet(sel.id); const q = C.queueInfo(o.id); det = '<h3>' + esc(o.name) + '</h3><p class="small">' + esc(bName(o.building)) + ' · ' + esc(q.label) + '</p><button class="btn p" data-a="go" data-r="outlet" data-id="' + o.id + '">View menu</button>'; } else if (sel.k === 'station') { const s = S.stations.find(x => x.id === sel.id); det = '<h3>' + esc(s.name) + '</h3><p class="small">' + s.state + ' · ' + s.hours + '</p><button class="btn" data-a="go" data-r="stations">Station details</button>'; } else { const g = S.greenStations.find(x => x.id === sel.id); det = '<h3>' + esc(g.name) + '</h3><p class="small">Record waste-sorting actions with code ' + g.code + '.</p><button class="btn" data-a="go" data-r="sustain">Record action</button>'; } }
+    if (sel) { if (sel.k === 'outlet') { const o = C.outlet(sel.id); const q = C.queueInfo(o.id); det = '<h3>' + esc(o.name) + '</h3><p class="small">' + esc(bName(o.building)) + ' · ' + esc(q.label) + '</p><button class="btn p" data-a="go" data-r="outlet" data-id="' + o.id + '">View menu</button>'; } else if (sel.k === 'station') { const s = S.stations.find(x => x.id === sel.id); det = '<h3>' + esc(s.name) + '</h3><p class="small">' + s.state + ' · ' + s.hours + '</p>'; } else { const g = S.greenStations.find(x => x.id === sel.id); det = '<h3>' + esc(g.name) + '</h3><p class="small">Record waste-sorting actions with code ' + g.code + '.</p><button class="btn" data-a="go" data-r="sustain">Record action</button>'; } }
     return '<h1>Campus map</h1><div class="grid g2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)"><div class="mapw"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><path d="M5 50H95M50 5V95M20 20L80 80" stroke="var(--line)" stroke-width="2.4" fill="none" stroke-linecap="round"/>' + marks + '</svg></div><div class="card">' + det + '<div class="tlk" style="margin-top:14px"><span><i style="background:#0d9488;border-radius:50%"></i>Restaurant</span><span><i style="background:#0f2a43"></i>Pickup station</span><span><i style="background:#16a34a;border-radius:50%"></i>Green station</span></div></div></div>';
   },
 
@@ -286,7 +274,6 @@ Object.assign(ACTIONS, {
   cancelOrder: (sf, d) => run(sf, () => C.transition(sf.user, d.id, 'cancelled', 'Cancelled by student'), 'Order cancelled'),
   reorder: (sf, d) => { const o = C.getOrder(sf.user, d.id); let added = 0; const miss = []; o.lines.forEach(l => { try { C.addToCart(sf.user, l.itemId, l.qty); added++; } catch (e) { miss.push(l.name + ': ' + e.message); } }); sf.co = null; go(sf, 'cart'); if (miss.length) toast(sf, miss.join('; '), true); else toast(sf, 'Added to cart with current prices'); },
   stationScan: (sf, d) => { sf.modal = { type: 'scan', id: d.id }; },
-  simStation: (sf, d) => run(sf, () => C.setStation(d.id, d.s), 'Station set to ' + d.s),
   simVerify: (sf, d) => run(sf, () => C.reviewEvidence(sf.user, d.id, 'verified', true), 'Verified (simulated)'),
   redeemAsk: (sf, d) => { sf.modal = { type: 'redeem', id: d.id, key: 'rd-' + Date.now() }; },
   redeem: (sf, d) => { const r = run(sf, () => C.redeem(sf.user, d.id, d.k)); if (r) { sf.modal = null; toast(sf, 'Redeemed! Code ' + r.code); } },
