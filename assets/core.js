@@ -366,7 +366,7 @@ function createCore(store) {
     });
     const subtotal = money(lines.reduce((a, l) => a + l.lineTotal, 0));
     const q = queueInfo(o.id); const prepMin = Math.max(...lines.map(l => l.prep)) + Math.max(0, lines.reduce((a, l) => a + l.qty, 0) - 1);
-    const readyIn = q.wait + prepMin;
+    const readyIn = S.config.timing.orderLeadMin + PICKUP_MIN; // same 5-minute estimate the food cards show (order + pick up)
     const slotLen = S.config.slotMinutes; const p = parts(now());
     const first = Math.ceil((p.min + readyIn) / slotLen) * slotLen;
     const slots = [];
