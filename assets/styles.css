@@ -237,3 +237,7 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .rcard .rbody .btn{margin-top:auto}
 .rstar{font-weight:700;color:var(--ink)}
 .art.lg{background:var(--tint)}
+.excl{margin-top:18px}
+.excl summary{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-weight:700;cursor:pointer;list-style:none}
+.excl summary::-webkit-details-marker{display:none}
+.excl .hd,.excl[open] .sh{display:none}.excl[open] .hd{display:inline}

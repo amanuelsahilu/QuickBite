@@ -22,15 +22,22 @@ function breakTimeline(r, avail, late) {
   return '<div class="tl" role="img" aria-label="Break plan timeline">' + parts.filter(p => p[1] > 0).map(p => '<span style="flex:' + (p[3] || p[1]) + ';background:' + p[2] + '">' + p[1] + 'm</span>').join('') + '</div>' +
     '<div class="tlk">' + parts.map(p => '<span><i style="background:' + p[2] + '"></i>' + p[0] + '</span>').join('') + '</div>';
 }
-function recCard(sf, r, rec, big, plain) {
+// food that did not make the list: shown plainly, a little slower to be ready than the picks above
+function exclCard(r) {
+  const it = r.item; const ready = C.S.config.timing.orderLeadMin + PICKUP_MIN + Math.ceil(it.prep / 2);
+  return '<div class="card"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
+    '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + ready + ' min</div>' +
+    '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div></div></div></div>';
+}
+function recCard(sf, r, rec, big) {
   const it = r.item; const walkBack = C.walk(r.outlet.building, rec.break.to || r.outlet.building);
   r.walkBack = walkBack; r.eat = rec.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
   return '<div class="card' + (big ? ' hero' : '') + '"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
     '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + (C.S.config.timing.orderLeadMin + PICKUP_MIN) + ' min</div>' +
     '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
-    (r.reasons.length && !plain ? '<div class="small">' + r.reasons.map(x => '✓ ' + esc(x)).join('<br>') + '</div>' : '') + '</div></div>' +
+    '</div></div>' +
     (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail, rec.late) + '</div>' : '') +
-    '<div class="row" style="margin-top:12px"><button class="btn p" data-a="add" data-id="' + it.id + '">Add to cart</button><button class="btn" data-a="fit" data-id="' + it.id + '">View schedule fit</button><button class="btn" data-a="go" data-r="outlet" data-id="' + r.outlet.id + '">Menu</button></div></div>';
+    '<div class="row" style="margin-top:12px"><button class="btn p" data-a="add" data-id="' + it.id + '">Add to cart</button><button class="btn" data-a="fit" data-id="' + it.id + '">View schedule fit</button></div></div>';
 }
 
 const STU_VIEWS = {
@@ -50,7 +57,7 @@ const STU_VIEWS = {
       '<div class="card kpi"><div class="l">Active orders</div><div class="v num">' + active.length + '</div><div class="small muted">' + (active[0] ? active[0].id + ' · ' + STATUS[active[0].status][0] : 'none right now') + '</div></div>' +
       '</div>' +
       '<div class="grid g2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)"><section><h2>Your break plan</h2>' +
-      (top ? recCard(sf, top, rec, true, true) : '<div class="card"><p><b>No option fits right now.</b></p><p class="muted small">' + (rec.avail == null ? 'Add your class schedule to plan around breaks.' : rec.excluded.length + ' items checked; none fit your time, budget, diet and outlet hours. See why in AI Picks.') + '</p><button class="btn" data-a="go" data-r="ai">See all options</button></div>') +
+      (top ? recCard(sf, top, rec, true) : '<div class="card"><p><b>No option fits right now.</b></p><p class="muted small">' + (rec.avail == null ? 'Add your class schedule to plan around breaks.' : rec.excluded.length + ' items checked; none fit your time, budget, diet and outlet hours. See why in AI Picks.') + '</p><button class="btn" data-a="go" data-r="ai">See all options</button></div>') +
       '</section>' +
       '<section class="dash-side">' +
       '<div class="card"><h3>Next reward</h3>' + (nextR ? '<div class="row between small"><span>' + esc(nextR.name) + '</span><span class="num">' + pts + ' / ' + nextR.cost + '</span></div><div class="bar" style="margin-top:6px"><i style="width:' + Math.min(100, pts / nextR.cost * 100) + '%;background:var(--green)"></i></div>' : '<p class="small">You can redeem every reward in the catalogue.</p>') + '</div>' +
@@ -89,7 +96,7 @@ const STU_VIEWS = {
       (rec.avail == null ? '' : '<p class="small">You have <b>' + rec.avail + ' min</b> before ' + esc(rec.break.next ? rec.break.next.name + ' at ' + rec.break.next.start + ' in ' + bName(rec.break.next.building) : 'your next class') + '.</p>') +
       (top ? '<h2>Best option for your next break</h2>' + recCard(sf, top, rec, true) + (rec.list.length > 1 ? '<h2 style="margin-top:18px">Alternatives</h2><div class="grid g2">' + rec.list.slice(1, 7).map(r => recCard(sf, r, rec, false)).join('') + '</div>' : '')
         : '<div class="card"><h2>Nothing fits right now</h2><p>No option meets your time, budget, dietary and allergy rules' + ((sort === 'healthiest' || sort === 'protein') ? ' with supplied nutrition data' : '') + '. We will not suggest something that might make you late or that is not confirmed safe for your allergies.</p><button class="btn" data-a="go" data-r="diet">Review dietary profile</button></div>') +
-      '<details style="margin-top:14px"><summary>Why ' + rec.excluded.length + ' items were excluded</summary><table class="stack"><thead><tr><th>Item</th><th>Reason</th></tr></thead><tbody>' + rec.excluded.map(r => '<tr><td>' + esc(r.item.name) + ' <span class="muted small">' + esc(r.outlet.name) + '</span></td><td class="small">' + esc(r.excluded.join('; ')) + '</td></tr>').join('') + '</tbody></table></details>';
+      (rec.excluded.length ? '<details class="excl"><summary><span class="sh">Show excluded items</span><span class="hd">Hide excluded items</span></summary><div class="grid g2" style="margin-top:12px">' + rec.excluded.map(exclCard).join('') + '</div></details>' : '');
   },
 
   schedule(sf) {
