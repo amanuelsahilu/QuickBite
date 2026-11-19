@@ -11,6 +11,7 @@ function createCore(store) {
   const BASE = Date.UTC(2026, 10, 16); // Monday 16 Nov 2026 00:00 UTC — demo week anchor
 
   const PREFS = ['Halal', 'Vegetarian', 'Vegan', 'High Protein', 'Low Calorie', 'Low Sugar', 'Gluten-Free', 'Dairy-Free', 'Nut-Free'];
+  const ORDERABLE = ['available', 'low']; // 'low' = running out fast, still orderable
   const HARD_PREFS = ['Halal', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free'];
   const ALLERGENS = ['Peanuts', 'Tree nuts', 'Milk/dairy', 'Eggs', 'Gluten/wheat', 'Soy', 'Fish', 'Shellfish', 'Sesame'];
   const ACTIVE = ['submitted', 'accepted', 'preparing', 'ready'];
@@ -318,7 +319,7 @@ function createCore(store) {
       const d = dietCheck(actor, it);
       const reasons = [], excluded = [];
       if (!st.open) excluded.push(o.name + ' ' + st.label.toLowerCase());
-      if (it.status !== 'available' || it.stock === 0) excluded.push('Sold out / unavailable');
+      if (!ORDERABLE.includes(it.status) || it.stock === 0) excluded.push('Sold out / unavailable');
       if (prof.budget && it.price > prof.budget) excluded.push('Over your AED ' + prof.budget + ' budget');
       d.block.forEach(b => excluded.push(b)); if (d.unknown) excluded.push('Allergen info not declared');
       const walkTo = walk(from, o.building), walkBack = walk(o.building, to);
@@ -359,7 +360,7 @@ function createCore(store) {
     return tx(() => {
       const c = cart(actor); const it = item(itemId);
       if (c.outletId && c.outletId !== it.outletId && c.lines.length) err('cart_outlet', 'Your cart has items from ' + outlet(c.outletId).name + '. Place that order first or clear your cart.');
-      if (it.status !== 'available' || it.stock === 0) err('unavailable', it.name + ' is not available');
+      if (!ORDERABLE.includes(it.status) || it.stock === 0) err('unavailable', it.name + ' is not available');
       c.outletId = it.outletId;
       const l = c.lines.find(l => l.itemId === itemId);
       if (l) l.qty += qty || 1; else c.lines.push({ itemId, qty: qty || 1, note: '' });
@@ -388,7 +389,7 @@ function createCore(store) {
     if (!st.open) problems.push(o.name + ' is ' + st.label.toLowerCase());
     const lines = c.lines.map(l => {
       const it = item(l.itemId); const price = it.price;
-      if (it.status !== 'available') problems.push(it.name + ' is now ' + it.status);
+      if (!ORDERABLE.includes(it.status)) problems.push(it.name + ' is now ' + (it.status === 'soldout' ? 'sold out' : it.status));
       if (it.stock != null && it.stock < l.qty) problems.push('Only ' + it.stock + ' ' + it.name + ' left');
       const d = dietCheck(actor, it); d.block.forEach(b => warnings.push(it.name + ': ' + b)); d.warn.forEach(b => warnings.push(it.name + ': ' + b));
       return { itemId: it.id, name: it.name, price, qty: l.qty, note: l.note, lineTotal: money(price * l.qty), allergens: it.allergens, prep: it.prep };
@@ -550,9 +551,22 @@ function createCore(store) {
       if (!it) { it = { id: uid('i-'), outletId, nutrition: null, ingredients: null, allergens: null, tags: [], status: 'available', stock: null, cat: 'bowl', prep: 5, desc: '' }; S.items.push(it); }
       Object.assign(it, { name: String(data.name).trim(), price: money(price), cat: data.cat || it.cat, prep: Math.max(1, Number(data.prep) || it.prep), desc: data.desc != null ? data.desc : it.desc, tags: data.tags || it.tags, allergens: data.allergensDeclared ? (data.allergens || []) : (data.allergensDeclared === false ? null : it.allergens), ingredients: data.ingredients != null ? (data.ingredients || null) : it.ingredients, stock: !('stock' in data) ? it.stock : (data.stock === '' || data.stock == null ? null : Math.max(0, Number(data.stock))), status: data.status || it.status });
       if (data.kcal !== undefined) it.nutrition = data.kcal === '' || data.kcal == null ? null : { kcal: Number(data.kcal), protein: Number(data.protein) || 0, supplied: 'Supplied by outlet' };
-      if (it.stock === 0 && it.status === 'available') it.status = 'soldout';
-      if (it.stock > 0 && it.status === 'soldout') it.status = 'available';
+      if (data.stock !== undefined && it.stock === 0 && ORDERABLE.includes(it.status)) it.status = 'soldout';
+      if (data.stock !== undefined && it.stock > 0 && it.status === 'soldout') it.status = 'available';
       audit(actor, 'item_upsert', it.id); return it;
+    });
+  }
+  function setItemStatus(actor, itemId, status) {
+    return tx(() => {
+      const it = item(itemId); requireOutlet(actor, it.outletId);
+      if (!['available', 'low', 'soldout', 'unavailable'].includes(status)) err('validation', 'Unknown status');
+      it.status = status; audit(actor, 'item_status', it.id); return it;
+    });
+  }
+  function setItemTags(actor, itemId, tags) {
+    return tx(() => {
+      const it = item(itemId); requireOutlet(actor, it.outletId);
+      it.tags = PREFS.filter(t => tags.includes(t)); audit(actor, 'item_tags', it.id); return it;
     });
   }
 
@@ -733,7 +747,7 @@ function createCore(store) {
     get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
     MAX_PRICE, PICKUP_MIN, HEAD_MAX_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
     cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
-    setOutlet, upsertItem,
+    setOutlet, upsertItem, setItemStatus, setItemTags, ORDERABLE,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
     notifications, markRead, setClock, advance, setStation, reset, updateAccount, saveProfile, saveClass, deleteClass, toggleFav,

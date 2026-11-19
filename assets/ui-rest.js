@@ -52,9 +52,9 @@ const RES_VIEWS = {
     return rHead(sf, 'Menu & availability') + '<div class="row" style="margin-bottom:12px"><button class="btn p" data-a="editItem">Add item</button>' + (q ? '<span>Filtered by “' + esc(sf.q) + '” <button class="btn sm" data-a="clearq">Clear</button></span>' : '') + '</div>' +
       '<div class="grid gauto mgrid">' + items.map(i => '<div class="card mitem st-' + i.status + '"><div class="food">' + art(i.cat, o.color) + '<div style="flex:1;min-width:0"><div class="row between" style="align-items:flex-start;gap:8px"><b>' + esc(i.name) + '</b><span class="price">' + aed(i.price) + '</span></div>' +
         '<div class="small muted">' + ic('clock') + i.prep + ' min prep' + (i.stock == null ? '' : ' · ' + i.stock + ' in stock') + '</div></div></div>' +
-        '<div class="chips" style="margin:10px 0 6px">' + i.tags.map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
+        '<div class="mtags" role="group" aria-label="Tags for ' + esc(i.name) + '">' + C.PREFS.map(t => '<button class="mtag" data-a="itemTag" data-id="' + i.id + '" data-t="' + t + '" aria-pressed="' + i.tags.includes(t) + '">' + t + '</button>').join('') + '</div>' +
         '<div class="small">' + (i.allergens ? 'Contains: ' + esc(i.allergens.join(', ') || 'None') : '<b style="color:var(--amber)">Allergens not declared</b>') + '</div>' +
-        '<div class="mfoot"><select class="stsel" aria-label="Status of ' + esc(i.name) + '" data-ch="itemStatus" data-id="' + i.id + '">' + ['available', 'soldout', 'unavailable'].map(st => '<option value="' + st + '"' + (i.status === st ? ' selected' : '') + '>' + { available: 'Available', soldout: 'Sold out', unavailable: 'Unavailable' }[st] + '</option>').join('') + '</select><button class="btn sm" data-a="editItem" data-id="' + i.id + '">Edit</button></div></div>').join('') + '</div>' +
+        '<div class="mfoot"><select class="stsel" aria-label="Status of ' + esc(i.name) + '" data-ch="itemStatus" data-id="' + i.id + '">' + ['available', 'low', 'soldout', 'unavailable'].map(st => '<option value="' + st + '"' + (i.status === st ? ' selected' : '') + '>' + { available: 'Available', low: 'Running out fast', soldout: 'Sold out', unavailable: 'Unavailable' }[st] + '</option>').join('') + '</select></div></div>').join('') + '</div>' +
       '<div class="card" style="margin-top:14px"><h3 class="rh"><span class="ri">' + ic('clock') + '</span>Hours & temporary closure</h3>' + (owner ? '<form data-form="hours" class="row"><div><label class="f" for="ho-' + sf.id + '">Opens</label><input type="time" id="ho-' + sf.id + '" name="open" value="' + o.open + '"></div><div><label class="f" for="hc-' + sf.id + '">Closes</label><input type="time" id="hc-' + sf.id + '" name="close" value="' + o.close + '"></div><button class="btn p" style="align-self:flex-end">Save hours</button></form>' : '<p class="small">Hours: ' + o.open + '–' + o.close + ' (owner can edit)</p>') +
       '<div class="tog ostat" role="group" aria-label="Outlet status" style="margin-top:14px">' + ['open', 'paused', 'closed'].map(st => '<button data-a="oStatus" data-s="' + st + '" aria-pressed="' + (o.status === st) + '">' + { open: 'Open', paused: 'Pause orders', closed: 'Closed today' }[st] + '</button>').join('') + '</div></div>';
   },
@@ -145,6 +145,7 @@ Object.assign(ACTIONS, {
   toCounter: (sf, d) => run(sf, () => C.switchToCounter(sf.user, d.id), 'Switched to counter pickup'),
   pause: sf => { const o = C.outlet(curOutlet(sf)); run(sf, () => C.setOutlet(sf.user, o.id, { status: o.status === 'paused' ? 'open' : 'paused' })); },
   oStatus: (sf, d) => run(sf, () => C.setOutlet(sf.user, curOutlet(sf), { status: d.s }), 'Outlet status updated'),
+  itemTag: (sf, d) => { const it = C.item(d.id); const tags = it.tags.includes(d.t) ? it.tags.filter(x => x !== d.t) : it.tags.concat(d.t); run(sf, () => C.setItemTags(sf.user, d.id, tags)); },
   editItem: (sf, d) => { sf.modal = { type: 'item', id: d.id || null }; },
   days: (sf, d) => { sf.days = Number(d.n); },
   report: (sf, d) => run(sf, () => C.reportReview(sf.user, d.id), 'Reported'),
@@ -162,4 +163,4 @@ Object.assign(FORMS, {
   baseline: (sf, d) => run(sf, () => C.setBaseline(sf.user, curOutlet(sf), d.kg), 'Baseline saved'),
   reply: (sf, d, el) => run(sf, () => C.replyReview(sf.user, el.dataset.id, d.text), 'Reply posted'),
 });
-Object.assign(CHANGES, { fcAdj: (sf, v) => { sf.fcAdj = Number(v); }, fcBuf: (sf, v) => { sf.fcBuf = Number(v); }, itemStatus: (sf, v, el) => run(sf, () => C.upsertItem(sf.user, curOutlet(sf), { id: el.dataset.id, name: C.item(el.dataset.id).name, price: C.item(el.dataset.id).price, status: v }), 'Availability updated') });
+Object.assign(CHANGES, { fcAdj: (sf, v) => { sf.fcAdj = Number(v); }, fcBuf: (sf, v) => { sf.fcBuf = Number(v); }, itemStatus: (sf, v, el) => run(sf, () => C.setItemStatus(sf.user, el.dataset.id, v), 'Availability updated') });

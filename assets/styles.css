@@ -396,9 +396,15 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .mitem .small svg{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
 .mfoot{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:12px}
 .stsel{flex:1;min-height:38px;padding:0 12px;border-radius:99px;font-weight:700;font-size:14px;border:1.5px solid var(--line)}
-.st-available .stsel{border-color:light-dark(#86efac,#2f6a43);color:var(--green);background:light-dark(#f0fdf4,#10241a)}
+.stsel{background:var(--card);color:var(--ink)}
+.st-low .stsel{border-color:light-dark(#fed7aa,#4a2d1a);color:var(--acc);background:var(--accsoft)}
 .st-soldout .stsel{border-color:light-dark(#fecaca,#5a1d1d);color:var(--red);background:light-dark(#fef2f2,#2a1414)}
 .st-unavailable .stsel{color:var(--muted);background:var(--soft)}
+.mtags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
+.mtag{min-height:30px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.mtag:hover{border-color:var(--acc)}
+.mtag[aria-pressed=true]{background:var(--accsoft);border-color:var(--acc);color:var(--acc);font-weight:700}
+.mtag[aria-pressed=true]::before{content:"✓ "}
 .st-soldout,.st-unavailable{opacity:.85}
 /* restaurant forecast */
 .fctl{background:linear-gradient(120deg,light-dark(#fff4ec,#2a1a10),var(--card));border-color:light-dark(#fed7aa,#4a2d1a)}

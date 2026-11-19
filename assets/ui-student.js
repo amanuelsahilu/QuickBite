@@ -27,14 +27,14 @@ function exclCard(r) {
   const it = r.item; const ready = C.S.config.timing.orderLeadMin + PICKUP_MIN + Math.ceil(it.prep / 2);
   return '<div class="card"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
     '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + ready + ' min</div>' +
-    '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div></div></div></div>';
+    '<div class="chips" style="margin:6px 0">' + (it.status === 'low' ? '<span class="chip o">Running out fast</span>' : '') + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div></div></div></div>';
 }
 function recCard(sf, r, rec, big) {
   const it = r.item; const walkBack = C.walk(r.outlet.building, rec.break.to || r.outlet.building);
   r.walkBack = walkBack; r.eat = rec.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
   return '<div class="card' + (big ? ' hero' : '') + '"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
     '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + (C.S.config.timing.orderLeadMin + PICKUP_MIN) + ' min</div>' +
-    '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
+    '<div class="chips" style="margin:6px 0">' + (it.status === 'low' ? '<span class="chip o">Running out fast</span>' : '') + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
     '</div></div>' +
     (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail, rec.late) + '</div>' : '') +
     '<div class="row" style="margin-top:12px"><button class="btn p" data-a="add" data-id="' + it.id + '">Add to cart</button><button class="btn" data-a="fit" data-id="' + it.id + '">View schedule fit</button></div></div>';
@@ -229,9 +229,9 @@ const STU_VIEWS = {
   },
 };
 function dishCard(sf, i) {
-  const o = C.outlet(i.outletId); const d = C.dietCheck(sf.user, i); const prof = C.S.profiles[sf.user]; const unavailable = i.status !== 'available' || i.stock === 0;
+  const o = C.outlet(i.outletId); const d = C.dietCheck(sf.user, i); const prof = C.S.profiles[sf.user]; const unavailable = !C.ORDERABLE.includes(i.status) || i.stock === 0;
   return '<div class="card"><div class="food">' + art(i.cat, o.color) + '<div style="flex:1"><div class="row between"><b>' + esc(i.name) + '</b><span class="price">' + aed(i.price) + '</span></div><div class="small muted">' + esc(o.name) + ' · prep ~' + i.prep + ' min' + (i.stock != null && i.stock > 0 ? ' · ' + i.stock + ' left' : '') + '</div></div></div>' +
-    '<div class="chips" style="margin:8px 0">' + i.tags.map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
+    '<div class="chips" style="margin:8px 0">' + (i.status === 'low' ? '<span class="chip o">Running out fast</span>' : '') + i.tags.map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
     '<div class="small">' + (i.allergens ? 'Contains: ' + (i.allergens.length ? esc(i.allergens.join(', ')) : 'no major allergens declared') : '<span style="color:var(--amber);font-weight:700">Allergens not declared — ask the outlet</span>') + '</div>' +
     (d.block.length || d.warn.length ? '<div class="warn" style="margin-top:6px;padding:6px 10px">' + d.block.concat(d.warn).map(esc).join('<br>') + '</div>' : '') +
     '<div class="row" style="margin-top:10px">' + (unavailable ? '<span class="chip r">' + (i.status === 'unavailable' ? 'Unavailable' : 'Sold out') + '</span>' : '<button class="btn p sm" data-a="add" data-id="' + i.id + '">Add to cart</button>') + '<button class="btn sm" data-a="itemInfo" data-id="' + i.id + '">Details</button><button class="ib fav" style="height:36px" data-a="fav" data-k="item" data-id="' + i.id + '" aria-label="Favourite ' + esc(i.name) + '" aria-pressed="' + prof.favItems.includes(i.id) + '">' + ic('heart', prof.favItems.includes(i.id)) + '</button></div></div>';
@@ -239,7 +239,7 @@ function dishCard(sf, i) {
 const STU_MODALS = {
   item(sf, m) {
     const i = C.item(m.id); const o = C.outlet(i.outletId);
-    return '<div class="row between"><h2>' + esc(i.name) + '</h2><button class="btn sm" data-a="close">Close</button></div>' + art(i.cat, o.color, true) + '<p>' + esc(i.desc) + '</p><table><tbody><tr><td>Outlet</td><td>' + esc(o.name) + '</td></tr><tr><td>Price</td><td>' + aed(i.price) + '</td></tr><tr><td>Preparation</td><td>~' + i.prep + ' min</td></tr><tr><td>Ingredients</td><td>' + (i.ingredients ? esc(i.ingredients) : '<span class="muted">Not supplied</span>') + '</td></tr><tr><td>Declared allergens</td><td>' + (i.allergens ? esc(i.allergens.join(', ') || 'None declared') : '<b style="color:var(--amber)">Not declared</b>') + '</td></tr><tr><td>Nutrition</td><td>' + (i.nutrition ? i.nutrition.kcal + ' kcal · ' + i.nutrition.protein + ' g protein<br><span class="small muted">' + esc(i.nutrition.supplied) + '</span>' : '<span class="muted">Not supplied by outlet</span>') + '</td></tr><tr><td>Collection</td><td>Counter or pickup station</td></tr></tbody></table>' + (i.status === 'available' && i.stock !== 0 ? '<button class="btn p" data-a="add" data-id="' + i.id + '">Add to cart</button>' : '');
+    return '<div class="row between"><h2>' + esc(i.name) + '</h2><button class="btn sm" data-a="close">Close</button></div>' + art(i.cat, o.color, true) + '<p>' + esc(i.desc) + '</p><table><tbody><tr><td>Outlet</td><td>' + esc(o.name) + '</td></tr><tr><td>Price</td><td>' + aed(i.price) + '</td></tr><tr><td>Preparation</td><td>~' + i.prep + ' min</td></tr><tr><td>Ingredients</td><td>' + (i.ingredients ? esc(i.ingredients) : '<span class="muted">Not supplied</span>') + '</td></tr><tr><td>Declared allergens</td><td>' + (i.allergens ? esc(i.allergens.join(', ') || 'None declared') : '<b style="color:var(--amber)">Not declared</b>') + '</td></tr><tr><td>Nutrition</td><td>' + (i.nutrition ? i.nutrition.kcal + ' kcal · ' + i.nutrition.protein + ' g protein<br><span class="small muted">' + esc(i.nutrition.supplied) + '</span>' : '<span class="muted">Not supplied by outlet</span>') + '</td></tr><tr><td>Collection</td><td>Counter or pickup station</td></tr></tbody></table>' + (C.ORDERABLE.includes(i.status) && i.stock !== 0 ? '<button class="btn p" data-a="add" data-id="' + i.id + '">Add to cart</button>' : '');
   },
   fit(sf, m) {
     const rec = C.recommend(sf.user, { runningLate: !!sf.late }); const r = rec.list.concat(rec.excluded).find(x => x.item.id === m.id); const cfg = C.S.config.timing; const br = rec.break;
