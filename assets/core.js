@@ -4,6 +4,7 @@
 function createCore(store) {
   const KEY = 'quickbite-demo-v1';
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const MAX_PRICE = 18; // no menu item may cost more than this
   const PICKUP_MIN = 3; // minutes to collect a ready order
   const HEAD_MAX_MIN = 5; // running late: walk to class shown as at most 5 min
   const TZ_OFFSET = 4 * 60; // campus-local time (Asia/Dubai, UTC+4)
@@ -72,7 +73,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 11, seq: 0,
+      demo: true, version: 12, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -143,20 +144,20 @@ function createCore(store) {
     const I = (outletId, n, name, cat, price, prep, tags, allergens, extra) => s.items.push(Object.assign({
       id: 'i-' + outletId + '-' + n, outletId, name, cat, price, prep, tags, allergens, ingredients: null, nutrition: null, stock: null, status: 'available', desc: '',
     }, extra || {}));
-    I('cafe', 1, 'Grilled Chicken Rice Bowl', 'bowl', 24, 8, ['Halal', 'High Protein', 'Dairy-Free'], ['Soy', 'Sesame'], { desc: 'Grilled chicken, rice, greens, sesame-soy dressing.', ingredients: 'Chicken, rice, lettuce, cucumber, sesame, soy sauce', nutrition: { kcal: 610, protein: 42, supplied: 'Supplied by outlet' }, stock: 14 });
+    I('cafe', 1, 'Grilled Chicken Rice Bowl', 'bowl', 17, 8, ['Halal', 'High Protein', 'Dairy-Free'], ['Soy', 'Sesame'], { desc: 'Grilled chicken, rice, greens, sesame-soy dressing.', ingredients: 'Chicken, rice, lettuce, cucumber, sesame, soy sauce', nutrition: { kcal: 610, protein: 42, supplied: 'Supplied by outlet' }, stock: 14 });
     I('cafe', 2, 'Falafel Wrap', 'wrap', 16, 5, ['Halal', 'Vegetarian', 'Vegan', 'Dairy-Free'], ['Gluten/wheat', 'Sesame'], { desc: 'Falafel, tahini, pickles, salad in a wrap.' });
     I('cafe', 3, 'Shakshuka & Toast', 'bowl', 18, 10, ['Halal', 'Vegetarian'], ['Eggs', 'Gluten/wheat'], { desc: 'Eggs in spiced tomato sauce with toast.' });
-    I('cafe', 4, 'Chicken Caesar Wrap', 'wrap', 19, 5, ['Halal', 'High Protein'], null, { desc: 'Allergen information not yet declared by outlet.' });
-    I('fresh', 1, 'Quinoa Power Salad', 'salad', 26, 6, ['Halal', 'Vegan', 'Vegetarian', 'Gluten-Free', 'Dairy-Free', 'Low Calorie', 'High Protein'], ['Sesame'], { desc: 'Quinoa, chickpeas, roasted veg, lemon-tahini.', nutrition: { kcal: 430, protein: 18, supplied: 'Supplied by outlet' }, stock: 10 });
-    I('fresh', 2, 'Greek Salad', 'salad', 21, 4, ['Halal', 'Vegetarian', 'Gluten-Free', 'Low Calorie'], ['Milk/dairy'], { desc: 'Tomato, cucumber, olives, feta.', nutrition: { kcal: 320, protein: 9, supplied: 'Supplied by outlet' } });
+    I('cafe', 4, 'Chicken Caesar Wrap', 'wrap', 16, 5, ['Halal', 'High Protein'], null, { desc: 'Allergen information not yet declared by outlet.' });
+    I('fresh', 1, 'Quinoa Power Salad', 'salad', 18, 6, ['Halal', 'Vegan', 'Vegetarian', 'Gluten-Free', 'Dairy-Free', 'Low Calorie', 'High Protein'], ['Sesame'], { desc: 'Quinoa, chickpeas, roasted veg, lemon-tahini.', nutrition: { kcal: 430, protein: 18, supplied: 'Supplied by outlet' }, stock: 10 });
+    I('fresh', 2, 'Greek Salad', 'salad', 15, 4, ['Halal', 'Vegetarian', 'Gluten-Free', 'Low Calorie'], ['Milk/dairy'], { desc: 'Tomato, cucumber, olives, feta.', nutrition: { kcal: 320, protein: 9, supplied: 'Supplied by outlet' } });
     I('fresh', 3, 'Berry Smoothie', 'drink', 15, 3, ['Vegetarian', 'Gluten-Free', 'Low Sugar'], ['Milk/dairy'], { desc: 'Mixed berries, yogurt. No added sugar.' });
     I('fresh', 4, 'Almond Granola Pot', 'pastry', 14, 2, ['Vegetarian'], ['Tree nuts', 'Milk/dairy', 'Gluten/wheat'], { desc: 'Yogurt, almond granola, honey.' });
-    I('pizza', 1, 'Margherita Pizza', 'pizza', 28, 12, ['Halal', 'Vegetarian'], ['Gluten/wheat', 'Milk/dairy'], { desc: 'Tomato, mozzarella, basil.', stock: 20 });
-    I('pizza', 2, 'Chicken Tikka Pizza', 'pizza', 34, 14, ['Halal', 'High Protein'], ['Gluten/wheat', 'Milk/dairy'], { desc: 'Spiced chicken, peppers, onion.' });
-    I('pizza', 3, 'Penne Arrabbiata', 'bowl', 25, 10, ['Halal', 'Vegan', 'Vegetarian', 'Dairy-Free'], ['Gluten/wheat'], { desc: 'Penne in spicy tomato sauce.' });
+    I('pizza', 1, 'Margherita Pizza', 'pizza', 16, 12, ['Halal', 'Vegetarian'], ['Gluten/wheat', 'Milk/dairy'], { desc: 'Tomato, mozzarella, basil.', stock: 20 });
+    I('pizza', 2, 'Chicken Tikka Pizza', 'pizza', 18, 14, ['Halal', 'High Protein'], ['Gluten/wheat', 'Milk/dairy'], { desc: 'Spiced chicken, peppers, onion.' });
+    I('pizza', 3, 'Penne Arrabbiata', 'bowl', 15, 10, ['Halal', 'Vegan', 'Vegetarian', 'Dairy-Free'], ['Gluten/wheat'], { desc: 'Penne in spicy tomato sauce.' });
     I('sand', 1, 'Halloumi Toastie', 'sandwich', 17, 5, ['Halal', 'Vegetarian'], ['Milk/dairy', 'Gluten/wheat'], { desc: 'Grilled halloumi, tomato, mint.' });
-    I('sand', 2, 'Turkey Club', 'sandwich', 22, 6, ['Halal', 'High Protein'], ['Gluten/wheat', 'Eggs'], { desc: 'Turkey, egg, lettuce, tomato.', nutrition: { kcal: 560, protein: 46, supplied: 'Supplied by outlet' }, stock: 8 });
-    I('sand', 3, 'Tuna Melt', 'sandwich', 19, 6, ['Halal', 'High Protein'], ['Fish', 'Milk/dairy', 'Gluten/wheat'], { desc: 'Tuna, cheese, sourdough.', nutrition: { kcal: 540, protein: 31, supplied: 'Supplied by outlet' } });
+    I('sand', 2, 'Turkey Club', 'sandwich', 16, 6, ['Halal', 'High Protein'], ['Gluten/wheat', 'Eggs'], { desc: 'Turkey, egg, lettuce, tomato.', nutrition: { kcal: 560, protein: 46, supplied: 'Supplied by outlet' }, stock: 8 });
+    I('sand', 3, 'Tuna Melt', 'sandwich', 15, 6, ['Halal', 'High Protein'], ['Fish', 'Milk/dairy', 'Gluten/wheat'], { desc: 'Tuna, cheese, sourdough.', nutrition: { kcal: 540, protein: 31, supplied: 'Supplied by outlet' } });
     I('coffee', 1, 'Flat White', 'drink', 14, 3, ['Vegetarian', 'Gluten-Free', 'Halal'], ['Milk/dairy'], { desc: 'Double shot, steamed milk.' });
     I('coffee', 2, 'Oat Latte', 'drink', 16, 3, ['Vegan', 'Vegetarian', 'Dairy-Free', 'Halal'], ['Gluten/wheat'], { desc: 'Oat milk (may contain gluten).' });
     I('coffee', 3, 'Zaatar Croissant', 'pastry', 9, 4, ['Vegetarian', 'Halal'], ['Gluten/wheat', 'Milk/dairy', 'Sesame'], { desc: 'Butter croissant with zaatar.', stock: 12 });
@@ -213,7 +214,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 11) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 12) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -369,7 +370,15 @@ function createCore(store) {
     const slotLen = S.config.slotMinutes; const p = parts(now());
     const first = Math.ceil((p.min + readyIn) / slotLen) * slotLen;
     const slots = [];
-    for (let m = first; m < Math.min(toMin(o.close), first + slotLen * 8); m += slotLen) { const used = slotLoad(o.id, hm(m)); slots.push({ slot: hm(m), used, cap: o.capacityPerSlot, full: used >= o.capacityPerSlot }); }
+    // other students' bookings are simulated (fixed per outlet and slot) so availability varies;
+    // each outlet also opens a different number of upcoming slots
+    const hash = t => { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; };
+    const nSlots = 3 + hash(o.id) % 5;
+    for (let m = first; m < Math.min(toMin(o.close), first + slotLen * nSlots); m += slotLen) {
+      const sim = hash(o.id + hm(m)) % (o.capacityPerSlot + 2); const used = Math.min(o.capacityPerSlot, slotLoad(o.id, hm(m)) + sim);
+      slots.push({ slot: hm(m), used, cap: o.capacityPerSlot, full: used >= o.capacityPerSlot });
+    }
+    if (slots.length && slots.every(x => x.full)) { const l = slots[slots.length - 1]; l.used = l.cap - 1; l.full = false; }
     const method = opts.method || 'counter';
     let station = null;
     if (method === 'station') {
@@ -508,7 +517,7 @@ function createCore(store) {
     return tx(() => {
       requireOutlet(actor, outletId);
       if (!data.name || !String(data.name).trim()) err('validation', 'Name is required');
-      const price = Number(data.price); if (!(price > 0)) err('validation', 'Price must be more than 0');
+      const price = Number(data.price); if (!(price > 0)) err('validation', 'Price must be more than 0'); if (price > MAX_PRICE) err('validation', 'Price can be at most AED ' + MAX_PRICE);
       let it = data.id ? S.items.find(i => i.id === data.id) : null;
       if (it && it.outletId !== outletId) err('forbidden', 'Item belongs to another outlet');
       if (!it) { it = { id: uid('i-'), outletId, nutrition: null, ingredients: null, allergens: null, tags: [], status: 'available', stock: null, cat: 'bowl', prep: 5, desc: '' }; S.items.push(it); }
@@ -694,7 +703,7 @@ function createCore(store) {
   return {
     DAYS, PREFS, ALLERGENS, HARD_PREFS, GREEN_TYPES, TRANSITIONS,
     get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
-    PICKUP_MIN, HEAD_MAX_MIN, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
+    MAX_PRICE, PICKUP_MIN, HEAD_MAX_MIN, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
     cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
