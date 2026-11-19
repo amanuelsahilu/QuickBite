@@ -93,7 +93,7 @@ const APP = {
   },
 };
 const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['orders', 'Orders', 'bag'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['profile', 'Profile', 'user']];
-const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf']];
+const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf'], ['rprofile', 'Profile', 'user']];
 const STU_TABS = [['dashboard', 'Home', 'home'], ['marketplace', 'Food', 'store'], ['ai', 'Picks', 'spark'], ['orders', 'Orders', 'bag'], ['more', 'More', 'menu']];
 const RES_TABS = [['rdash', 'Home', 'home'], ['rorders', 'Orders', 'list'], ['rmenu', 'Menu', 'store'], ['rsales', 'Sales', 'chart'], ['more', 'More', 'menu']];
 const isStu = sf => C.user(sf.user).role === 'student';
@@ -119,7 +119,7 @@ function renderSurface(sf) {
       : (mine.length > 1 ? '<label class="sr" for="os-' + sf.id + '">Outlet</label><select class="orsel" id="os-' + sf.id + '" data-ch="outlet">' + mine.map(o => '<option value="' + o.id + '"' + (o.id === curOutlet(sf) ? ' selected' : '') + '>' + esc(o.name) + '</option>').join('') + '</select>' : '<span class="orsel" style="display:inline-flex;align-items:center">' + esc(C.outlet(curOutlet(sf)).name) + '</span>')) +
     themeBtn() +
     '<button class="ib" data-a="notifs" aria-label="Notifications, ' + unread + ' unread">' + ic('bell') + (unread ? '<span class="dot">' + unread + '</span>' : '') + '</button>' +
-    '<button class="ib hidem" data-a="' + (stu ? 'go' : 'account') + '" data-r="profile" aria-label="Account">' + ic('user') + '</button>' +
+    '<button class="ib hidem" data-a="go" data-r="' + (stu ? 'profile' : 'rprofile') + '" aria-label="Profile">' + ic('user') + '</button>' +
     '</header>';
   const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><button class="brand wm hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + WORDMARK + '</button>' +
     nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') || (n[0] === 'profile' && sf.route === 'diet') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +

@@ -102,7 +102,7 @@ td.r,th.r{text-align:right}
 .scroll{overflow-x:auto}
 /* forms */
 label.f{display:block;font-size:13px;font-weight:700;margin:10px 0 4px}
-input[type=text],input[type=number],input[type=time],select,textarea{width:100%;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=time],select,textarea{width:100%;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px}
 textarea{min-height:70px}
 .cb{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;min-height:44px;background:var(--card);font-weight:600}
 .cb input{width:18px;height:18px;accent-color:var(--teal)}
@@ -461,3 +461,5 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .ordp .pi{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:var(--accsoft);color:var(--teal);flex:none}
 .ordp .pi svg{width:17px;height:17px}
 .ordp .stack{display:block}
+.rpfp .pi{background:var(--accsoft);color:var(--acc)}.rpfp .oinfo svg{color:var(--acc)}
+@container (max-width:760px){.pfp .phero>.row{width:100%}.pfp .phero>.row .btn{flex:1}}

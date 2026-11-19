@@ -74,7 +74,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 15, seq: 0,
+      demo: true, version: 16, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -102,9 +102,9 @@ function createCore(store) {
         { id: 's3', role: 'student', name: 'Sara', full: 'Sara Ali' },
         { id: 's4', role: 'student', name: 'Yousef', full: 'Yousef Karim' },
         { id: 's5', role: 'student', name: 'Mariam', full: 'Mariam Saeed' },
-        { id: 'r1', role: 'restaurant', name: 'Layla', full: 'Layla — owner, Campus Café & Coffee Station' },
-        { id: 'r2', role: 'restaurant', name: 'Karim', full: 'Karim — staff, Pizza Corner' },
-        { id: 'r3', role: 'restaurant', name: 'Noor', full: 'Noor — owner, Fresh Bites, Pizza Corner, Sandwich Hub' },
+        { id: 'r1', role: 'restaurant', name: 'Fatima', full: 'Fatima Al Hashimi', email: 'fatima.alhashimi@quickbite.ae', phone: '+971 50 418 2736' },
+        { id: 'r2', role: 'restaurant', name: 'Karim', full: 'Karim Nasser', email: 'karim.nasser@quickbite.ae', phone: '+971 55 902 1147' },
+        { id: 'r3', role: 'restaurant', name: 'Khalid', full: 'Khalid Al Mansoori', email: 'khalid.almansoori@quickbite.ae', phone: '+971 52 337 6081' },
       ],
       memberships: [
         { userId: 'r1', outletId: 'cafe', role: 'owner' }, { userId: 'r1', outletId: 'coffee', role: 'owner' },
@@ -241,7 +241,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 15) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 16) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -720,9 +720,11 @@ function createCore(store) {
   // ---------- student data ----------
   function updateAccount(actor, d) {
     return tx(() => {
-      requireStudent(actor); const u = user(actor);
+      const u = user(actor); if (!u) err('not_found', 'Account not found');
       const first = String(d.first || '').trim().slice(0, 40), last = String(d.last || '').trim().slice(0, 40);
       if (!first) err('validation', 'First name is required');
+      if (d.email !== undefined) { const e = String(d.email).trim(); if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) err('validation', 'Enter a valid email address'); u.email = e; }
+      if (d.phone !== undefined) { const ph = String(d.phone).trim().slice(0, 20); if (ph && !/^[+0-9 ()-]{7,20}$/.test(ph)) err('validation', 'Enter a valid phone number'); u.phone = ph; }
       u.name = first; u.full = last ? first + ' ' + last : first; return u;
     });
   }
