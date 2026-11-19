@@ -83,11 +83,9 @@ function themeBtn() { const d = curTheme() === 'dark'; return '<button class="ib
 
 /* ---------- app state ---------- */
 const APP = {
-  mode: 'landing', stageShow: 'phone',
+  mode: 'landing',
   sf: {
     main: { id: 'main', user: 's1', route: 'dashboard', p: {} },
-    phone: { id: 'phone', user: 's1', route: 'dashboard', p: {} },
-    desk: { id: 'desk', user: 'r1', route: 'rdash', p: {} },
   },
 };
 const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['diet', 'Dietary Profile', 'diet'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
@@ -151,7 +149,7 @@ function demoBar() {
   const users = S.users.map(u => '<option value="' + u.id + '"' + (APP.sf.main.user === u.id ? ' selected' : '') + '>' + esc(u.full) + '</option>').join('');
   return '<div class="demobar' + (APP.dbOpen ? ' open' : '') + '" role="region" aria-label="Demo controls"><b class="lab">DEMO BUILD · sample data only, no real orders or payments</b><button class="dbt" data-a="dbt" aria-expanded="' + !!APP.dbOpen + '">Demo controls</button><div class="dgrp">' +
     (window.QB_NATIVE ? '<span class="grp"><button data-a="mode" data-m="app"' + (APP.mode === 'app' ? ' class="on"' : '') + '>App</button><button data-a="mode" data-m="project"' + (APP.mode === 'project' ? ' class="on"' : '') + '>Project status</button></span>' : '') +
-    (window.QB_NATIVE ? '' : '<span class="grp"><button data-a="mode" data-m="landing"' + (APP.mode === 'landing' ? ' class="on"' : '') + '>Home</button><button data-a="mode" data-m="app"' + (APP.mode === 'app' ? ' class="on"' : '') + '>Website</button><button data-a="mode" data-m="stage"' + (APP.mode === 'stage' ? ' class="on"' : '') + '>App + kitchen live</button><button data-a="mode" data-m="project"' + (APP.mode === 'project' ? ' class="on"' : '') + '>Project status</button></span>') +
+    (window.QB_NATIVE ? '' : '<span class="grp"><button data-a="mode" data-m="landing"' + (APP.mode === 'landing' ? ' class="on"' : '') + '>Home</button><button data-a="mode" data-m="app"' + (APP.mode === 'app' ? ' class="on"' : '') + '>Website</button><button data-a="mode" data-m="project"' + (APP.mode === 'project' ? ' class="on"' : '') + '>Project status</button></span>') +
     (APP.mode === 'app' ? '<span class="grp"><label for="who">Signed in as</label><select id="who" data-ch="who">' + users + '</select></span>' : '') +
     '<span class="grp">Campus clock <b class="num">' + C.DAYS[p.day] + ' ' + C.hm(p.min) + '</b>' + (S.clock.mode === 'demo' ? '<button data-a="adv" data-n="5">+5 min</button><button data-a="adv" data-n="30">+30</button><button data-a="clock" data-m="real">Use real time</button>' : '<button data-a="clock" data-m="demo">Use demo time</button>') + '</span>' +
     '<span class="grp"><button data-a="reset">Reset demo data</button></span></div></div>';
@@ -162,17 +160,14 @@ function renderAll() {
   const root = document.getElementById('root'); let h = '';
   if (APP.mode === 'landing') h += LANDING();
   else if (APP.mode === 'project') h += PROJECT();
-  else if (APP.mode === 'app') h += '<div class="surface fixedm" data-sf="main">' + renderSurface(APP.sf.main) + '</div>';
-  else h += '<div class="stagebar"><button class="btn sm" data-a="mode" data-m="landing">← Home</button><b>Student app and restaurant kitchen, live together</b></div><div class="stagetabs" role="tablist"><button class="btn sm' + (APP.stageShow === 'phone' ? ' p' : '') + '" data-a="stageShow" data-m="phone">Student app</button><button class="btn sm' + (APP.stageShow === 'desk' ? ' p' : '') + '" data-a="stageShow" data-m="desk">Restaurant website</button></div>' +
-    '<div class="stage" data-show="' + APP.stageShow + '"><div class="phonew"><div class="phone"><div class="surface" data-sf="phone">' + renderSurface(APP.sf.phone) + '</div></div><p class="stagecap">Student app · signed in as <select data-ch="phoneUser" aria-label="Student shown in phone">' + C.S.users.filter(u => u.role === 'student').map(u => '<option value="' + u.id + '"' + (APP.sf.phone.user === u.id ? ' selected' : '') + '>' + esc(u.full) + '</option>').join('') + '</select></p></div>' +
-      '<div class="deskw"><p class="stagecap" style="max-width:none;margin-top:0">Restaurant website, signed in as <select data-ch="deskUser" aria-label="Restaurant user shown">' + C.S.users.filter(u => u.role === 'restaurant').map(u => '<option value="' + u.id + '"' + (APP.sf.desk.user === u.id ? ' selected' : '') + '>' + esc(u.full) + '</option>').join('') + '</select></p><div class="desk"><div class="surface" data-sf="desk">' + renderSurface(APP.sf.desk) + '</div></div></div></div>';
+  else h += '<div class="surface fixedm" data-sf="main">' + renderSurface(APP.sf.main) + '</div>';
   root.innerHTML = h;
   document.querySelectorAll('[data-sf]').forEach(el => { const s = APP.sf[el.dataset.sf]; const k = keep[el.dataset.sf]; if (s && s._nav) { el.scrollTop = 0; if (el.dataset.sf === 'main') window.scrollTo(0, 0); s._nav = false; } else if (k) { el.scrollTop = k.s; } });
   if (fid) { const n = document.getElementById(fid); if (n) { n.focus(); try { if (sel != null) n.setSelectionRange(sel, sel); } catch (e) { } } }
 }
 C.on(() => { });
 function setHash() { const h = APP.mode === 'landing' ? '' : APP.mode === 'app' ? (isStu(APP.sf.main) ? 'student' : 'restaurant') : APP.mode; try { history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) { } }
-function fromHash() { const h = (location.hash || '').slice(1); if (h === 'student') { APP.mode = 'app'; APP.sf.main.user = 's1'; go(APP.sf.main, 'dashboard'); } else if (h === 'restaurant') { APP.mode = 'app'; APP.sf.main.user = 'r1'; go(APP.sf.main, 'rdash'); } else if (h === 'stage' || h === 'project') APP.mode = h; else APP.mode = 'landing'; if (window.QB_NATIVE && APP.mode === 'stage') APP.mode = 'landing'; }
+function fromHash() { const h = (location.hash || '').slice(1); if (h === 'student') { APP.mode = 'app'; APP.sf.main.user = 's1'; go(APP.sf.main, 'dashboard'); } else if (h === 'restaurant') { APP.mode = 'app'; APP.sf.main.user = 'r1'; go(APP.sf.main, 'rdash'); } else if (h === 'project') APP.mode = h; else APP.mode = 'landing'; }
 
 /* ---------- events ---------- */
 const ACTIONS = {}; const FORMS = {}; const CHANGES = {};
@@ -199,17 +194,14 @@ Object.assign(ACTIONS, {
   account: sf => { sf.modal = { type: 'account' }; },
   signout: sf => { sf.modal = null; APP.mode = 'landing'; setHash(); },
   mode: (sf, d) => { APP.mode = d.m; if (d.m === 'app' && d.u) { APP.sf.main.user = d.u; go(APP.sf.main, d.u.startsWith('s') ? 'dashboard' : 'rdash'); } setHash(); window.scrollTo(0, 0); },
-  stageShow: (sf, d) => { APP.stageShow = d.m; },
   dbt: () => { APP.dbOpen = !APP.dbOpen; },
   theme: () => { applyTheme(curTheme() === 'dark' ? 'light' : 'dark'); },
   adv: (sf, d) => C.advance(Number(d.n)),
   clock: (sf, d) => C.setClock({ mode: d.m }),
-  reset: () => { C.reset(); Object.values(APP.sf).forEach(s => { s.modal = null; s.p = {}; }); toast(APP.mode === 'stage' ? APP.sf.phone : APP.sf.main, 'Sample data reset'); },
+  reset: () => { C.reset(); Object.values(APP.sf).forEach(s => { s.modal = null; s.p = {}; }); toast(APP.sf.main, 'Sample data reset'); },
 });
 Object.assign(FORMS, { search: (sf, d) => { sf.q = (d.q || '').trim(); go(sf, isStu(sf) ? 'marketplace' : 'rmenu'); } });
 Object.assign(CHANGES, {
   who: (sf, v) => { APP.sf.main.user = v; go(APP.sf.main, v.startsWith('s') ? 'dashboard' : 'rdash'); APP.sf.main.outlet = null; setHash(); },
-  phoneUser: (sf, v) => { APP.sf.phone.user = v; go(APP.sf.phone, 'dashboard'); },
-  deskUser: (sf, v) => { APP.sf.desk.user = v; APP.sf.desk.outlet = null; go(APP.sf.desk, 'rdash'); },
   outlet: (sf, v) => { sf.outlet = v; },
 });
