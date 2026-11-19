@@ -344,3 +344,20 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .cready{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--soft)}
 .cready svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--teal)}
 @container (max-width:760px){.csum{position:static}}
+/* restaurant refresh: shared */
+.rkpi{display:flex;align-items:center;gap:14px}
+.ri{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--accsoft);color:var(--acc)}
+.ri svg{width:20px;height:20px}
+.rh{display:flex;align-items:center;gap:10px;margin:0 0 12px}.rh .ri{width:32px;height:32px;border-radius:10px}.rh .ri svg{width:17px;height:17px}
+@container (max-width:760px){.rkpi{flex-direction:column;align-items:flex-start;gap:8px}.rkpi .ri{width:36px;height:36px}}
+/* restaurant dashboard */
+.pwin{display:flex;flex-direction:column}
+.pw{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}.pw:last-child{border-bottom:0}
+.pw>b{font-size:15px;padding-top:6px}
+.pwo{display:flex;flex-wrap:wrap;gap:6px}
+.pwc{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;border:1px solid var(--line);border-radius:99px;font-size:13px;font-weight:600;background:var(--card)}
+.pwc .num{color:var(--muted);font-weight:700}
+.fcbig{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:14px 0}.fcbig>b{font-size:40px;line-height:1;color:var(--acc)}
+.toplist{margin:0;padding:0;list-style:none;counter-reset:t}
+.toplist li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);counter-increment:t}
+.toplist li>span:first-child::before{content:counter(t);display:inline-grid;place-items:center;width:20px;height:20px;margin-right:8px;border-radius:50%;background:var(--soft);font-size:11px;font-weight:800}
