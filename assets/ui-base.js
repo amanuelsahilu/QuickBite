@@ -60,6 +60,8 @@ function art(cat, color, big) {
   }[cat] || '';
   return '<div class="art' + (big ? ' lg' : '') + '"' + (big ? ' style="--tint:' + c + '22"' : '') + '><svg viewBox="0 0 100 100" preserveAspectRatio="' + (big ? 'xMidYMid meet' : 'xMidYMid slice') + '" role="img" aria-label="' + esc(cat) + ' illustration">' + plate + f + '</svg></div>';
 }
+// a dish's uploaded photo if it has one, otherwise its drawn illustration
+function dishArt(it, color, big) { return it.photo ? '<div class="art photo' + (big ? ' lg' : '') + '"><img src="' + esc(it.photo) + '" alt="' + esc(it.name || 'Dish') + ' photo"></div>' : art(it.cat, color, big); }
 function pseudoQR(token) { // visual only — not a scannable QR code
   let h = 0; for (const ch of token) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const r = () => { h = (h * 1103515245 + 12345) >>> 0; return h / 4294967296; };

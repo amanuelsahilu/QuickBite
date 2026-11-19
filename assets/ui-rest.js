@@ -15,6 +15,30 @@ function ocard(sf, o) {
     (o.allergyNote && o.allergyNote.length ? '<div class="warn small" style="padding:4px 8px">' + o.allergyNote.map(esc).join('<br>') + '</div>' : '') + (o.reusable ? '<div class="small"><span class="chip g">Reusable container</span></div>' : '') +
     '<div class="small oexp">' + ic('clock') + '<span>Expected ' + timeOf(o.readyBy) + (o.delay ? ' (+' + o.delay + ')' : '') + (late ? ' · <b style="color:var(--red)">overdue</b>' : '') + '</span></div><div class="oact">' + act + '</div></div>';
 }
+// blank dish card for adding a new menu item (inline, shaped like the other dish cards)
+function newItemCard(sf, o) {
+  const d = sf.newItem; const pill = (name, v, on, cls) => '<label class="pill' + (cls ? ' ' + cls : '') + '"><input type="checkbox" name="' + name + '" value="' + v + '"' + (on ? ' checked' : '') + '><span>' + v + '</span></label>';
+  const has = (k, v) => [].concat(d[k] || []).includes(v);
+  return '<form class="card mitem newi" data-form="newItem"><h3 class="rh"><span class="ri">' + ic('store') + '</span>New dish</h3>' +
+    '<label class="f">Picture</label><div class="npic"><label class="nup"><input type="file" accept="image/*" class="nphoto"><span class="nprev">' + (d.photo ? '<img src="' + esc(d.photo) + '" alt="Dish photo">' : ic('box') + '<b>Upload photo</b>') + '</span></label><input type="hidden" name="photo" value="' + esc(d.photo || '') + '">' +
+    '<div class="ncats" role="radiogroup" aria-label="Or pick an illustration">' + CATS.map(c => '<label class="ncat" title="' + c[1] + '"><input type="radio" name="cat" value="' + c[0] + '"' + ((d.cat || 'bowl') === c[0] ? ' checked' : '') + '>' + art(c[0], o.color) + '<span>' + c[1] + '</span></label>').join('') + '</div></div>' +
+    '<p class="small muted" style="margin:4px 0 0">Upload a photo, or pick an illustration if you don’t have one.</p>' +
+    '<label class="f" for="nn-' + sf.id + '">Name</label><input type="text" id="nn-' + sf.id + '" name="name" required maxlength="60" value="' + esc(d.name || '') + '" placeholder="e.g. Chicken Shawarma Wrap">' +
+    '<div class="grid g3" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><label class="f" for="np-' + sf.id + '">Price (AED)</label><input type="number" step="0.5" min="0.5" max="' + C.MAX_PRICE + '" id="np-' + sf.id + '" name="price" required value="' + esc(d.price || '') + '"></div><div><label class="f" for="nt-' + sf.id + '">Prep (min)</label><input type="number" min="1" max="60" id="nt-' + sf.id + '" name="prep" value="' + esc(d.prep || 5) + '"></div><div><label class="f" for="ns-' + sf.id + '">Stock</label><input type="number" min="0" id="ns-' + sf.id + '" name="stock" placeholder="optional" value="' + esc(d.stock || '') + '"></div></div>' +
+    '<label class="f" for="nd-' + sf.id + '">Details</label><textarea id="nd-' + sf.id + '" name="desc" maxlength="200" placeholder="What’s in it, how it’s served">' + esc(d.desc || '') + '</textarea>' +
+    '<label class="f">Tags</label><div class="pills">' + C.PREFS.map(t => pill('tags', t, has('tags', t))).join('') + '</div>' +
+    '<label class="f">Allergens</label><div class="pills">' + C.ALLERGENS.map(a => pill('allergens', a, has('allergens', a), 'al')).join('') + '</div>' +
+    '<label class="cb" style="margin-top:10px"><input type="checkbox" name="unknown" value="1"' + (d.unknown ? ' checked' : '') + '>Allergens not known yet (students will be warned)</label>' +
+    '<div class="row" style="margin-top:14px"><button class="btn p">Add to menu</button><button type="button" class="btn" data-a="cancelNewItem">Cancel</button></div></form>';
+}
+// photo upload for a new dish: shrink it in the browser, then keep it in the form (no re-render, so typed fields stay)
+document.addEventListener('change', e => {
+  const inp = e.target.closest('.nphoto'); if (!inp || !inp.files || !inp.files[0]) return;
+  const form = inp.closest('form'); const file = inp.files[0]; const rd = new FileReader();
+  rd.onload = () => { const img = new Image(); img.onload = () => { const k = Math.min(1, 360 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); const url = c.toDataURL('image/jpeg', 0.8);
+    form.querySelector('input[name=photo]').value = url; form.querySelector('.nprev').innerHTML = '<img src="' + url + '" alt="Dish photo">'; }; img.src = rd.result; };
+  rd.readAsDataURL(file);
+});
 const RES_VIEWS = {
   rdash(sf) {
     const id = curOutlet(sf); const o = C.outlet(id); const q = C.queueInfo(id); const live = C.outletOrders(sf.user, id).filter(x => ['submitted', 'accepted', 'preparing', 'ready'].includes(x.status));
@@ -49,8 +73,8 @@ const RES_VIEWS = {
   rmenu(sf) {
     const id = curOutlet(sf); const o = C.outlet(id); const q = (sf.q || '').toLowerCase(); const items = C.S.items.filter(i => i.outletId === id && (!q || i.name.toLowerCase().includes(q)));
     const owner = C.membership(sf.user, id).role === 'owner';
-    return rHead(sf, 'Menu & availability') + '<div class="row" style="margin-bottom:12px"><button class="btn p" data-a="editItem">Add item</button>' + (q ? '<span>Filtered by “' + esc(sf.q) + '” <button class="btn sm" data-a="clearq">Clear</button></span>' : '') + '</div>' +
-      '<div class="grid gauto mgrid">' + items.map(i => '<div class="card mitem st-' + i.status + '"><div class="food">' + art(i.cat, o.color) + '<div style="flex:1;min-width:0"><div class="row between" style="align-items:flex-start;gap:8px"><b>' + esc(i.name) + '</b><span class="price">' + aed(i.price) + '</span></div>' +
+    return rHead(sf, 'Menu & availability') + '<div class="row" style="margin-bottom:12px">' + (sf.newItem ? '' : '<button class="btn p" data-a="addItem">Add item</button>') + (q ? '<span>Filtered by “' + esc(sf.q) + '” <button class="btn sm" data-a="clearq">Clear</button></span>' : '') + '</div>' +
+      '<div class="grid gauto mgrid">' + (sf.newItem ? newItemCard(sf, o) : '') + items.map(i => '<div class="card mitem st-' + i.status + '"><div class="food">' + dishArt(i, o.color) + '<div style="flex:1;min-width:0"><div class="row between" style="align-items:flex-start;gap:8px"><b>' + esc(i.name) + '</b><span class="price">' + aed(i.price) + '</span></div>' +
         '<div class="small muted">' + ic('clock') + i.prep + ' min prep' + (i.stock == null ? '' : ' · ' + i.stock + ' in stock') + '</div></div></div>' +
         '<div class="mtags" role="group" aria-label="Tags for ' + esc(i.name) + '">' + C.PREFS.map(t => '<button class="mtag" data-a="itemTag" data-id="' + i.id + '" data-t="' + t + '" aria-pressed="' + i.tags.includes(t) + '">' + t + '</button>').join('') + '</div>' +
         '<div class="small">' + (i.allergens ? 'Contains: ' + esc(i.allergens.join(', ') || 'None') : '<b style="color:var(--amber)">Allergens not declared</b>') + '</div>' +
@@ -165,6 +189,7 @@ Object.assign(ACTIONS, {
   pause: sf => { const o = C.outlet(curOutlet(sf)); run(sf, () => C.setOutlet(sf.user, o.id, { status: o.status === 'paused' ? 'open' : 'paused' })); },
   oStatus: (sf, d) => run(sf, () => C.setOutlet(sf.user, curOutlet(sf), { status: d.s }), 'Outlet status updated'),
   itemTag: (sf, d) => { const it = C.item(d.id); const tags = it.tags.includes(d.t) ? it.tags.filter(x => x !== d.t) : it.tags.concat(d.t); run(sf, () => C.setItemTags(sf.user, d.id, tags)); },
+  addItem: sf => { sf.newItem = { cat: 'bowl', prep: 5 }; }, cancelNewItem: sf => { sf.newItem = null; },
   editItem: (sf, d) => { sf.modal = { type: 'item', id: d.id || null }; },
   days: (sf, d) => { sf.days = Number(d.n); },
   report: (sf, d) => run(sf, () => C.reportReview(sf.user, d.id), 'Reported'),
@@ -177,6 +202,11 @@ Object.assign(FORMS, {
   verify: (sf, d, el) => { if (run(sf, () => C.verifyCollection(sf.user, el.dataset.id, d.code), 'Handed over — order complete')) sf.modal = null; },
   capacity: (sf, d) => run(sf, () => C.setOutlet(sf.user, curOutlet(sf), { capacityPerSlot: Math.max(1, Number(d.capacityPerSlot)), parallel: Math.max(1, Number(d.parallel)) }), 'Capacity saved'),
   hours: (sf, d) => run(sf, () => { if (C.toMin(d.close) <= C.toMin(d.open)) throw new Error('Closing time must be after opening'); return C.setOutlet(sf.user, curOutlet(sf), { open: d.open, close: d.close }); }, 'Hours saved'),
+  newItem: (sf, d) => {
+    sf.newItem = Object.assign({}, d, { tags: [].concat(d.tags || []), allergens: [].concat(d.allergens || []) }); // keep what was typed if saving fails
+    const r = run(sf, () => C.upsertItem(sf.user, curOutlet(sf), { id: null, name: d.name, desc: d.desc, price: d.price, prep: d.prep, stock: d.stock === '' || d.stock == null ? undefined : d.stock, cat: d.cat, photo: d.photo, tags: [].concat(d.tags || []), allergensDeclared: !d.unknown, allergens: [].concat(d.allergens || []) }), 'Dish added to the menu');
+    if (r) sf.newItem = null;
+  },
   item: (sf, d, el) => { const r = run(sf, () => C.upsertItem(sf.user, curOutlet(sf), { id: el.dataset.id || null, name: d.name, desc: d.desc, price: d.price, prep: d.prep, stock: d.stock, cat: d.cat, tags: [].concat(d.tags || []), allergensDeclared: !!d.declared, allergens: [].concat(d.allergens || []), ingredients: d.ingredients, kcal: d.kcal, protein: d.protein }), 'Item saved'); if (r) sf.modal = null; },
   waste: (sf, d) => run(sf, () => C.addWaste(sf.user, curOutlet(sf), d.kg, d.note), 'Waste recorded'),
   baseline: (sf, d) => run(sf, () => C.setBaseline(sf.user, curOutlet(sf), d.kg), 'Baseline saved'),
