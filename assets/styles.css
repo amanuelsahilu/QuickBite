@@ -405,3 +405,10 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .hbar.tops{margin:4px 0 14px}.hbar.tops .bar{height:10px;margin-top:6px}.hbar.tops .bar>i{background:var(--acc)}
 .hbar.tops>span:first-child{font-weight:600}
 .fctl input[type=range]{accent-color:var(--acc)}
+/* restaurant sales */
+.money{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.money>div{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:14px;background:var(--soft)}
+.money span{font-size:13px;color:var(--muted)}.money b{font-size:22px}
+.money .neg b{color:var(--red)}
+.money .net{background:var(--accsoft)}.money .net b{color:var(--acc)}
+@container (max-width:760px){.money{grid-template-columns:minmax(0,1fr)}}
