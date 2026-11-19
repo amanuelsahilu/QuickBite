@@ -485,3 +485,4 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .restaurant .side .role b{color:var(--ink)}
 .rav{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff;font-weight:800}
 .side .role>div{min-width:0}
+.lhero h1{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(38px,5.4vw,60px);line-height:1.02;letter-spacing:-.02em;font-variation-settings:'opsz' 96}
