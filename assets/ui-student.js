@@ -206,14 +206,18 @@ const STU_VIEWS = {
 
   profile(sf) {
     const u = C.user(sf.user); const p = C.S.profiles[sf.user]; const np = sf.np || (sf.np = { reminders: true, promo: false });
-    return '<h1>Profile</h1><div class="grid g2"><div class="card"><h3>Account</h3><p>' + esc(u.full) + '<br><span class="small muted">Student account</span></p><button class="btn" data-a="signout">Sign out</button></div>' +
-      '<div class="card"><h3>Favourites</h3><p class="small"><b>Restaurants:</b> ' + (p.favOutlets.map(id => esc(C.outlet(id).name)).join(', ') || 'none') + '<br><b>Dishes:</b> ' + (p.favItems.map(id => esc(C.item(id).name)).join(', ') || 'none') + '</p></div>' +
-      '<div class="card"><h3>Green Points & rewards</h3><p><b class="num" style="color:var(--green)">' + C.balance(sf.user) + '</b> points</p><button class="btn" data-a="go" data-r="rewards">Open rewards</button></div>' +
-      '<div class="card"><h3>Planning</h3><div class="row"><button class="btn" data-a="go" data-r="diet">Dietary profile</button><button class="btn" data-a="go" data-r="schedule">Class schedule</button></div></div>' +
-      '<div class="card"><h3>Payment</h3><p class="small muted">No saved payment methods.</p></div>' +
-      '<div class="card"><h3>Notifications</h3><p class="small">Order updates (transactional): always on</p><label class="cb"><input type="checkbox" data-ch="np" data-k="reminders"' + (np.reminders ? ' checked' : '') + '>Break reminders</label> <label class="cb"><input type="checkbox" data-ch="np" data-k="promo"' + (np.promo ? ' checked' : '') + '>Deals & promotions</label></div>' +
-      '<div class="card"><h3>Privacy</h3><p class="small">Restaurants only see your first name, order items and dietary warnings on that order — never your schedule or full profile.</p><div class="row"><button class="btn" data-a="exportMe">Copy my data (JSON)</button><button class="btn" data-a="reset">Reset sample data</button></div></div>' +
-      '<div class="card"><h3>Help</h3><p class="small muted">Ask at any participating outlet for help with an order.</p></div></div>';
+    const hd = (icon, t) => '<h3 class="ph">' + '<span class="pi">' + ic(icon) + '</span>' + t + '</h3>';
+    const sw = (k, label) => '<label class="sw"><input type="checkbox" data-ch="np" data-k="' + k + '"' + (np[k] ? ' checked' : '') + '><span class="tr" aria-hidden="true"></span>' + label + '</label>';
+    return '<h1>Profile</h1><div class="pfp">' +
+      '<div class="card phero"><span class="av">' + esc(u.full.charAt(0)) + '</span><div style="flex:1;min-width:0"><h3 style="margin:0">Account</h3><p style="margin:2px 0 0"><b>' + esc(u.full) + '</b><br><span class="small">Student account</span></p></div><button class="btn" data-a="signout">Sign out</button></div>' +
+      '<div class="grid g2">' +
+      '<div class="card">' + hd('heart', 'Favourites') + '<p class="small"><b>Restaurants:</b> ' + (p.favOutlets.map(id => '<span class="chip pf">' + esc(C.outlet(id).name) + '</span>').join(' ') || 'none') + '<br><b>Dishes:</b> ' + (p.favItems.map(id => '<span class="chip pf">' + esc(C.item(id).name) + '</span>').join(' ') || 'none') + '</p></div>' +
+      '<div class="card">' + hd('leaf', 'Green Points & rewards') + '<p class="ppts"><b class="num">' + C.balance(sf.user) + '</b> points</p><button class="btn" data-a="go" data-r="rewards">Open rewards</button></div>' +
+      '<div class="card">' + hd('cal', 'Planning') + '<div class="plinks"><button class="plink" data-a="go" data-r="diet">' + ic('diet') + '<span>Dietary profile</span>' + ic('chev') + '</button><button class="plink" data-a="go" data-r="schedule">' + ic('cal') + '<span>Class schedule</span>' + ic('chev') + '</button></div></div>' +
+      '<div class="card">' + hd('card', 'Payment') + '<p class="small muted">No saved payment methods.</p></div>' +
+      '<div class="card">' + hd('bell', 'Notifications') + '<p class="small">Order updates (transactional): always on</p>' + sw('reminders', 'Break reminders') + sw('promo', 'Deals & promotions') + '</div>' +
+      '<div class="card">' + hd('lock', 'Privacy') + '<p class="small">Restaurants only see your first name, order items and dietary warnings on that order — never your schedule or full profile.</p><div class="row"><button class="btn" data-a="exportMe">Copy my data (JSON)</button><button class="btn" data-a="reset">Reset sample data</button></div></div>' +
+      '<div class="card">' + hd('help', 'Help') + '<p class="small muted">Ask at any participating outlet for help with an order.</p></div></div></div>';
   },
 };
 function dishCard(sf, i) {
