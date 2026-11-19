@@ -33,7 +33,7 @@ function LANDING() {
     '<div class="soc"><a href="#" aria-label="Instagram" title="Instagram">' + SOC.ig + '</a><a href="#" aria-label="Facebook" title="Facebook">' + SOC.fb + '</a><a href="#" aria-label="TikTok" title="TikTok">' + SOC.tt + '</a></div></div>' +
     '<div><b>Contact</b><p>Email: <a href="mailto:hello@quickbite.ae">hello@quickbite.ae</a><br>Phone: +971 50 284 7316<br>Office: +971 4 389 2150</p></div>' +
     '<div><b>Follow us</b><p>Instagram: @quickbite.campus<br>Facebook: /quickbitecampus<br>TikTok: @quickbite</p></div>' +
-    '<div><b>Office</b><p>Student Center, Ground floor<br>Sun–Thu · 8:00–17:00</p></div>' +
+    '<div><b>Office</b><p>Student Center, Ground floor<br>Mon–Thu · 8:00–17:00<br>Fri · 8:00–12:00</p></div>' +
     '</div><div class="inner foot-c">© 2026 QuickBite. All rights reserved.</div></footer></div>';
 }
 ACTIONS.howToggle = () => { APP.howOpen = !APP.howOpen; if (APP.howOpen) ACTIONS.scrollTo(null, { t: 'how' }); };
