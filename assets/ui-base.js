@@ -37,7 +37,9 @@ const I = {
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
 };
 const ic = (n, fill) => '<svg viewBox="0 0 24 24" fill="' + (fill ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + I[n] + '</svg>';
-const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#0f2a43"/><path d="M10 29c0-11 7-18 20-19-1 13-8 20-19 19z" fill="#14b8a6"/><path d="M11 29c5-6 9-10 15-14" stroke="#bbf7d0" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+// QuickBite mark: a bold "Q" with a bite taken out of the top right, crumbs and a teal tail
+const LOGO = '<svg class="qm" viewBox="0 0 44 44" aria-hidden="true"><path d="M33.6 18.6A13 13 0 1 1 24.4 9.4" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="34" cy="8.5" r="2.3" fill="#0d9488"/><circle cx="38.8" cy="13.4" r="1.6" fill="#0d9488"/><path d="M26 28l10.5 10.5" stroke="#0d9488" stroke-width="7" stroke-linecap="round"/></svg>';
+const WORDMARK = '<span class="sr">QuickBite</span>' + LOGO + '<span aria-hidden="true">uickBite</span>';
 
 // illustrated plates (generic food illustrations, drawn here)
 function art(cat, color, big) {
@@ -117,7 +119,7 @@ function renderSurface(sf) {
     '<button class="ib" data-a="notifs" aria-label="Notifications, ' + unread + ' unread">' + ic('bell') + (unread ? '<span class="dot">' + unread + '</span>' : '') + '</button>' +
     '<button class="ib hidem" data-a="' + (stu ? 'go' : 'account') + '" data-r="profile" aria-label="Account">' + ic('user') + '</button>' +
     '</header>';
-  const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><span class="brand">' + LOGO + 'QuickBite</span>' +
+  const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><span class="brand wm">' + WORDMARK + '</span>' +
     nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
     '<div class="role"><b>' + esc(u.name) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name + ' (' + o.role + ')').join(', '))) + '</span></div></aside>';
   const mt = '<nav class="mtabs" aria-label="Primary">' + tabs.map(t => '<button data-a="' + (t[0] === 'more' ? 'more' : 'go') + '" data-r="' + t[0] + '"' + (sf.route === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2]) + t[1] + '</button>').join('') + '</nav>';
