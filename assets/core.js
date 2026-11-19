@@ -73,7 +73,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 12, seq: 0,
+      demo: true, version: 13, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -98,6 +98,9 @@ function createCore(store) {
       users: [
         { id: 's1', role: 'student', name: 'Aisha', full: 'Aisha Rahman' },
         { id: 's2', role: 'student', name: 'Omar', full: 'Omar Haddad' },
+        { id: 's3', role: 'student', name: 'Sara', full: 'Sara Ali' },
+        { id: 's4', role: 'student', name: 'Yousef', full: 'Yousef Karim' },
+        { id: 's5', role: 'student', name: 'Mariam', full: 'Mariam Saeed' },
         { id: 'r1', role: 'restaurant', name: 'Layla', full: 'Layla — owner, Campus Café & Coffee Station' },
         { id: 'r2', role: 'restaurant', name: 'Karim', full: 'Karim — staff, Pizza Corner' },
         { id: 'r3', role: 'restaurant', name: 'Noor', full: 'Noor — owner, Fresh Bites, Pizza Corner, Sandwich Hub' },
@@ -108,11 +111,11 @@ function createCore(store) {
         { userId: 'r3', outletId: 'fresh', role: 'owner' }, { userId: 'r3', outletId: 'pizza', role: 'owner' }, { userId: 'r3', outletId: 'sand', role: 'owner' },
       ],
       outlets: [
-        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'sja', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 2, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true },
+        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'sja', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 0, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true },
         { id: 'fresh', name: 'Fresh Bites', cuisine: 'Salads & healthy', building: 'sjb', open: '08:00', close: '17:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Salads, grain bowls and smoothies.', color: '#16a34a', reusable: true },
         { id: 'pizza', name: 'Pizza Corner', cuisine: 'Pizza & pasta', building: 'sje', open: '11:00', close: '20:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Stone-baked personal pizzas and pasta.', color: '#ea580c', reusable: false },
         { id: 'sand', name: 'Sandwich Hub', cuisine: 'Sandwiches & wraps', building: 'sjc', open: '07:00', close: '16:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 3, desc: 'Toasted sandwiches and wraps, made fast.', color: '#ca8a04', reusable: false },
-        { id: 'coffee', name: 'Coffee Station', cuisine: 'Coffee & pastries', building: 'sjd', open: '07:00', close: '19:00', status: 'open', parallel: 2, capacityPerSlot: 10, baseline: 3, desc: 'Coffee, tea and baked goods.', color: '#7c3aed', reusable: true },
+        { id: 'coffee', name: 'Coffee Station', cuisine: 'Coffee & pastries', building: 'sjd', open: '07:00', close: '19:00', status: 'open', parallel: 2, capacityPerSlot: 10, baseline: 1, desc: 'Coffee, tea and baked goods.', color: '#7c3aed', reusable: true },
       ],
       items: [],
       stations: [
@@ -210,11 +213,30 @@ function createCore(store) {
         createdAt: at, readyBy: at + 300000, token: 'H' + n, tokenUsed: true, reusable: false, allergyNote: [], delay: 0, reviewed: true };
     };
     s.orders = [past(998, 'i-cafe-1', 1, 'counter', null, 3, '12:20'), past(997, 'i-coffee-1', 2, 'station', 'st-stc', 4, '10:05'), past(996, 'i-sand-2', 1, 'counter', null, 7, '13:40')];
+    // other students' orders today, so the kitchen screens have something to show
+    const NOW = 11 * 60 + 35; const flow = ['submitted', 'accepted', 'preparing', 'ready', 'collected', 'completed'];
+    const today = (n, sid, name, itemId, qty, status, at, slot) => {
+      const it = s.items.find(x => x.id === itemId); const t = BASE + (toMin(at) - TZ_OFFSET) * 60000; const total = it.price * qty; const upto = flow.indexOf(status);
+      return { id: 'QB-0' + n, studentId: sid, studentName: name, outletId: it.outletId, lines: [{ itemId: it.id, name: it.name, price: it.price, qty, note: '', lineTotal: total, allergens: it.allergens, prep: it.prep }],
+        subtotal: total, discount: 0, total, method: 'counter', stationId: null, compartmentId: null, slot, prepMin: it.prep * qty, status, payment: status === 'completed' ? 'sim_captured' : 'sim_authorised',
+        events: flow.slice(0, upto + 1).map((st, i) => ({ s: st, at: t + i * 120000, by: i ? 'staff' : sid })), createdAt: t, readyBy: status === 'completed' ? t + 300000 : Math.max(t + (it.prep * qty + 5) * 60000, BASE + (NOW + 1 - TZ_OFFSET) * 60000),
+        token: 'T' + n, tokenUsed: status === 'completed', reusable: false, allergyNote: [], delay: 0, reviewed: status === 'completed' };
+    };
+    s.orders.unshift(
+      today(989, 's3', 'Sara', 'i-cafe-2', 1, 'submitted', '11:33', '11:45'),
+      today(988, 's4', 'Yousef', 'i-cafe-3', 1, 'accepted', '11:29', '12:00'),
+      today(987, 's5', 'Mariam', 'i-cafe-4', 1, 'preparing', '11:24', '11:45'),
+      today(986, 's2', 'Omar', 'i-cafe-1', 1, 'ready', '11:18', '11:30'),
+      today(985, 's3', 'Sara', 'i-coffee-2', 1, 'submitted', '11:34', '11:45'),
+      today(984, 's4', 'Yousef', 'i-coffee-1', 1, 'preparing', '11:28', '11:45'),
+      today(983, 's5', 'Mariam', 'i-cafe-1', 1, 'completed', '09:10', '09:15'),
+      today(982, 's2', 'Omar', 'i-cafe-2', 2, 'completed', '10:05', '10:15'),
+      today(981, 's4', 'Yousef', 'i-coffee-3', 2, 'completed', '08:40', '08:45'));
     return s;
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 12) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 13) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
