@@ -197,6 +197,7 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:clamp(20px,3vw,36px)}
 .lnav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px max(5vw,16px);background:var(--card);flex-wrap:wrap}
 .lnav nav{display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:560px){.lnav nav{flex-wrap:nowrap;width:100%;gap:6px}.lnav nav .btn{flex:1 1 auto;min-width:0;padding:0 6px;font-size:clamp(12px,3.6vw,15px);white-space:nowrap}.lnav nav .ib{flex:none}}
 .how{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;counter-reset:s}
 .how .card b{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--accsoft);color:var(--teal);margin-bottom:8px}
 .eco{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
