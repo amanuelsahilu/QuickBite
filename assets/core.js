@@ -70,8 +70,8 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 4, seq: 0,
-      clock: { mode: 'demo', day: 0, min: 11 * 60 + 30 },
+      demo: true, version: 5, seq: 0,
+      clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
         timing: { eatBufferMin: 10, orderLeadMin: 2, runningLateBufferMin: 3, status: 'demo value — awaiting approval' },
@@ -196,7 +196,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 4) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 5) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 

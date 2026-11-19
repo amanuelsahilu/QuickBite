@@ -6,10 +6,11 @@ const bName = id => C.bName(id);
 function diningLine(r) {
   return '<span class="small muted">' + esc(r.outlet.name) + ' · ' + aed(r.item.price) + ' · ready ~' + r.ready + ' min</span>';
 }
+const PICKUP_MIN = 3; // minutes to collect a ready order
 function breakTimeline(r, avail) {
   const cfg = C.S.config.timing;
   // [label, minutes, colour, bar width]; pick up is drawn the same width as order to show how quick it is
-  const parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', 3, '#0d9488', cfg.orderLeadMin], ['Eat', r.eat, '#16a34a']];
+  const parts = [['Order', cfg.orderLeadMin, '#64748b'], ['Pick up', PICKUP_MIN, '#0d9488', cfg.orderLeadMin], ['Eat', r.eat, '#16a34a']];
   const used = parts.reduce((a, p) => a + p[1], 0);
   parts.push(['Rest', Math.max(0, (avail || 0) - used), '#0f2a43']);
   return '<div class="tl" role="img" aria-label="Break plan timeline">' + parts.filter(p => p[1] > 0).map(p => '<span style="flex:' + (p[3] || p[1]) + ';background:' + p[2] + '">' + p[1] + 'm</span>').join('') + '</div>' +
@@ -19,7 +20,7 @@ function recCard(sf, r, rec, big, plain) {
   const it = r.item; const walkBack = C.walk(r.outlet.building, rec.break.to || r.outlet.building);
   r.walkBack = walkBack; r.eat = rec.sort && sf.late ? 0 : C.S.config.timing.eatBufferMin; r.from = rec.break.from;
   return '<div class="card' + (big ? ' hero' : '') + '"><div class="food">' + art(it.cat, r.outlet.color, false) + '<div style="flex:1"><div class="row between"><h3 style="margin:0">' + esc(it.name) + '</h3><span class="price">' + aed(it.price) + '</span></div>' +
-    '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + r.ready + ' min</div>' +
+    '<div class="small muted">' + esc(r.outlet.name) + ' · ' + stars(outletRating(r.outlet.id)) + ' · ready in ~' + (C.S.config.timing.orderLeadMin + PICKUP_MIN) + ' min</div>' +
     '<div class="chips" style="margin:6px 0">' + it.tags.slice(0, 4).map(t => '<span class="chip g">' + esc(t) + '</span>').join('') + '</div>' +
     (r.reasons.length && !plain ? '<div class="small">' + r.reasons.map(x => '✓ ' + esc(x)).join('<br>') + '</div>' : '') + '</div></div>' +
     (big && rec.avail ? '<div style="margin-top:12px">' + breakTimeline(r, rec.avail) + '</div>' : '') +
@@ -244,10 +245,12 @@ const STU_MODALS = {
   },
   fit(sf, m) {
     const rec = C.recommend(sf.user, { runningLate: !!sf.late }); const r = rec.list.concat(rec.excluded).find(x => x.item.id === m.id); const cfg = C.S.config.timing; const br = rec.break;
-    const walkTo = C.walk(br.from || 'stc', r.outlet.building), walkBack = C.walk(r.outlet.building, br.to || r.outlet.building);
+    const order = cfg.orderLeadMin, pick = PICKUP_MIN, rest = rec.avail != null ? Math.max(0, rec.avail - order - pick) : null;
+    const other = r.excluded.filter(x => !/^Needs \d+ min/.test(x));
+    const fits = rec.avail == null || order + pick + (sf.late ? 0 : cfg.eatBufferMin) <= rec.avail;
     return '<div class="row between"><h2>Schedule fit</h2><button class="btn sm" data-a="close">Close</button></div><p><b>' + esc(r.item.name) + '</b> from ' + esc(r.outlet.name) + '</p><table><tbody>' +
-      '<tr><td>Time available</td><td class="r num">' + (rec.avail != null ? rec.avail + ' min' : 'no class limit') + '</td></tr><tr><td>Order lead</td><td class="r num">' + cfg.orderLeadMin + ' min</td></tr><tr><td>Queue wait</td><td class="r num">' + r.queue.wait + ' min</td></tr><tr><td>Preparation</td><td class="r num">' + r.item.prep + ' min</td></tr><tr><td>Walk ' + esc(bName(br.from || 'stc')) + ' → outlet (in parallel with prep)</td><td class="r num">' + walkTo + ' min</td></tr><tr><td>Time to eat</td><td class="r num">' + (sf.late ? 0 : cfg.eatBufferMin) + ' min</td></tr><tr><td>Walk to ' + esc(bName(br.to || r.outlet.building)) + '</td><td class="r num">' + walkBack + ' min</td></tr>' + (sf.late ? '<tr><td>Running-late buffer</td><td class="r num">' + cfg.runningLateBufferMin + ' min</td></tr>' : '') + '<tr><th>Total needed</th><th class="r num">' + r.need + ' min</th></tr></tbody></table>' +
-      (r.fits === false ? '<div class="bad">Does not fit: ' + esc(r.excluded.join('; ')) + '</div>' : r.excluded.length ? '<div class="warn">' + esc(r.excluded.join('; ')) + '</div>' : '<div class="ok">Fits your break.</div>') + '';
+      '<tr><td>Time to next class</td><td class="r num">' + (rec.avail != null ? rec.avail + ' min' : 'no class limit') + '</td></tr><tr><td>Order time</td><td class="r num">' + order + ' min</td></tr><tr><td>Pickup time</td><td class="r num">' + pick + ' min</td></tr>' + (rest != null ? '<tr><td>Time to eat and rest</td><td class="r num">' + rest + ' min</td></tr>' : '') + '</tbody></table>' +
+      (other.length ? '<div class="warn">' + esc(other.join('; ')) + '</div>' : fits ? '<div class="ok">Fits your break.</div>' : '<div class="bad">Does not fit your break.</div>');
   },
   redeem(sf, m) { const r = C.S.rewards.find(x => x.id === m.id); return '<h2>Redeem ' + esc(r.name) + '?</h2><p>This uses <b>' + r.cost + '</b> of your ' + C.balance(sf.user) + ' points.</p><p class="small muted">' + esc(r.terms) + '</p><div class="row"><button class="btn p" data-a="redeem" data-id="' + r.id + '" data-k="' + m.key + '">Confirm</button><button class="btn" data-a="close">Cancel</button></div>'; },
   scan(sf, m) { const o = C.getOrder(sf.user, m.id); return '<h2>Open compartment</h2><p class="small">Enter or confirm your collection code.</p><form data-form="scan" data-id="' + o.id + '"><label class="f" for="sc-' + sf.id + '">Collection code</label><input type="text" id="sc-' + sf.id + '" name="code" value="' + o.token + '" autocomplete="off"><div class="row" style="margin-top:10px"><button class="btn p">Open</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
