@@ -73,7 +73,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 13, seq: 0,
+      demo: true, version: 14, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -111,7 +111,7 @@ function createCore(store) {
         { userId: 'r3', outletId: 'fresh', role: 'owner' }, { userId: 'r3', outletId: 'pizza', role: 'owner' }, { userId: 'r3', outletId: 'sand', role: 'owner' },
       ],
       outlets: [
-        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'sja', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 0, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true },
+        { id: 'cafe', name: 'Campus Café', cuisine: 'Café & bowls', building: 'sja', open: '07:30', close: '18:00', status: 'open', parallel: 3, capacityPerSlot: 8, baseline: 0, desc: 'Rice bowls, wraps and breakfast all day.', color: '#0d9488', reusable: true, wasteBaseline: 2.1 },
         { id: 'fresh', name: 'Fresh Bites', cuisine: 'Salads & healthy', building: 'sjb', open: '08:00', close: '17:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Salads, grain bowls and smoothies.', color: '#16a34a', reusable: true },
         { id: 'pizza', name: 'Pizza Corner', cuisine: 'Pizza & pasta', building: 'sje', open: '11:00', close: '20:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 4, desc: 'Stone-baked personal pizzas and pasta.', color: '#ea580c', reusable: false },
         { id: 'sand', name: 'Sandwich Hub', cuisine: 'Sandwiches & wraps', building: 'sjc', open: '07:00', close: '16:00', status: 'open', parallel: 2, capacityPerSlot: 6, baseline: 3, desc: 'Toasted sandwiches and wraps, made fast.', color: '#ca8a04', reusable: false },
@@ -236,7 +236,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 13) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 14) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
