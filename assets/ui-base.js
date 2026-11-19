@@ -90,8 +90,8 @@ const APP = {
     desk: { id: 'desk', user: 'r1', route: 'rdash', p: {} },
   },
 };
-const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['diet', 'Dietary Profile', 'diet'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['smartsave', 'SmartSave', 'tag'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
-const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rsmartsave', 'SmartSave', 'tag'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf']];
+const STU_NAV = [['dashboard', 'Dashboard', 'home'], ['marketplace', 'Marketplace', 'store'], ['ai', 'AI Picks', 'spark'], ['schedule', 'Class Schedule', 'cal'], ['diet', 'Dietary Profile', 'diet'], ['orders', 'Orders', 'bag'], ['queue', 'Queue', 'clock'], ['stations', 'Pickup Stations', 'box'], ['sustain', 'Sustainability', 'leaf'], ['rewards', 'Rewards', 'gift'], ['map', 'Campus Map', 'map'], ['profile', 'Profile', 'user']];
+const RES_NAV = [['rdash', 'Dashboard', 'home'], ['rorders', 'Live Orders', 'list'], ['rqueue', 'Queue', 'clock'], ['rmenu', 'Menu', 'store'], ['rforecast', 'Demand Forecast', 'trend'], ['rsales', 'Sales Analytics', 'chart'], ['rwaste', 'Food Waste', 'trash'], ['rratings', 'Customer Ratings', 'star'], ['rsustain', 'Sustainability', 'leaf']];
 const STU_TABS = [['dashboard', 'Home', 'home'], ['marketplace', 'Food', 'store'], ['ai', 'Picks', 'spark'], ['orders', 'Orders', 'bag'], ['more', 'More', 'menu']];
 const RES_TABS = [['rdash', 'Home', 'home'], ['rorders', 'Orders', 'list'], ['rmenu', 'Menu', 'store'], ['rsales', 'Sales', 'chart'], ['more', 'More', 'menu']];
 const isStu = sf => C.user(sf.user).role === 'student';
@@ -194,7 +194,7 @@ Object.assign(ACTIONS, {
   go: (sf, d) => { go(sf, d.r, d.id ? { id: d.id } : {}); if (d.r === 'marketplace' && !d.keepq) sf.q = d.q || ''; },
   close: sf => { sf.modal = null; }, closeBg: sf => { sf.modal = null; },
   notifs: sf => { sf.modal = { type: 'notifs' }; C.markRead(sf.user); },
-  notif: (sf, d) => { const l = d.l || ''; sf.modal = null; if (l.startsWith('order:')) { go(sf, isStu(sf) ? 'order' : 'rorders', { id: l.slice(6) }); } else if (l) { const map = { orders: 'rorders', menu: 'rmenu', smartsave: isStu(sf) ? 'smartsave' : 'rsmartsave', ratings: 'rratings' }; go(sf, map[l] || l); } },
+  notif: (sf, d) => { const l = d.l || ''; sf.modal = null; if (l.startsWith('order:')) { go(sf, isStu(sf) ? 'order' : 'rorders', { id: l.slice(6) }); } else if (l) { const map = { orders: 'rorders', menu: 'rmenu', ratings: 'rratings' }; go(sf, map[l] || l); } },
   more: sf => { sf.modal = { type: 'more' }; },
   account: sf => { sf.modal = { type: 'account' }; },
   signout: sf => { sf.modal = null; APP.mode = 'landing'; setHash(); },

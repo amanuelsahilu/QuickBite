@@ -24,7 +24,6 @@ function createCore(store) {
     { id: 'reusable', name: 'Reusable Container', pts: 10, verifier: 'outlet' },
     { id: 'sustainable_pickup', name: 'Sustainable Pickup', pts: 5, verifier: 'auto-order' },
     { id: 'green_delivery', name: 'Green Delivery', pts: 5, verifier: 'deferred' },
-    { id: 'smartsave', name: 'SmartSave Meal', pts: 15, verifier: 'auto-order' },
     { id: 'lowwaste', name: 'Low-Waste Meal', pts: 5, verifier: 'tbd' },
   ];
 
@@ -71,7 +70,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 2, seq: 0,
+      demo: true, version: 3, seq: 0,
       clock: { mode: 'demo', day: 0, min: 10 * 60 + 20 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -131,7 +130,7 @@ function createCore(store) {
         ],
         s2: [{ id: 'c8', day: 0, name: 'Engineering Maths', start: '09:00', end: '10:30', building: 'eng' }, { id: 'c9', day: 0, name: 'Physics Lab', start: '11:00', end: '12:30', building: 'sci' }],
       },
-      carts: {}, orders: [], history: [], offers: [], evidence: [], ledger: [], rewards: [], redemptions: [], reviews: [], notifications: [], waste: [], audit: [], idem: {},
+      carts: {}, orders: [], history: [], evidence: [], ledger: [], rewards: [], redemptions: [], reviews: [], notifications: [], waste: [], audit: [], idem: {},
     };
     const I = (outletId, n, name, cat, price, prep, tags, allergens, extra) => s.items.push(Object.assign({
       id: 'i-' + outletId + '-' + n, outletId, name, cat, price, prep, tags, allergens, ingredients: null, nutrition: null, stock: null, status: 'available', desc: '',
@@ -157,12 +156,6 @@ function createCore(store) {
 
     s.stations.forEach(st => { for (let i = 1; i <= st.comps; i++) s.compartments.push({ id: st.id + '-' + i, stationId: st.id, n: i, state: (i % 5 === 0) ? 'occupied-demo' : 'free', orderId: null, tempC: st.state === 'operational' ? null : null }); });
 
-    s.offers = [
-      { id: 'off1', outletId: 'cafe', itemId: 'i-cafe-3', orig: 18, price: 9, qty: 4, remaining: 4, collectBy: '15:30', validUntil: '15:00', status: 'active' },
-      { id: 'off2', outletId: 'fresh', itemId: 'i-fresh-2', orig: 21, price: 11, qty: 3, remaining: 3, collectBy: '16:30', validUntil: '16:00', status: 'active' },
-      { id: 'off3', outletId: 'coffee', itemId: 'i-coffee-3', orig: 9, price: 4, qty: 1, remaining: 1, collectBy: '18:30', validUntil: '18:00', status: 'active' },
-      { id: 'off4', outletId: 'pizza', itemId: 'i-pizza-1', orig: 28, price: 15, qty: 2, remaining: 2, collectBy: '19:30', validUntil: '19:00', status: 'draft' },
-    ];
     s.rewards = [
       { id: 'rw1', name: 'AED 5 food voucher', cost: 100, stock: 50, terms: 'Valid at participating outlets for 30 days.', outlets: 'All participating outlets' },
       { id: 'rw2', name: 'Free coffee at Coffee Station', cost: 150, stock: 20, terms: 'One regular coffee. Valid for 30 days.', outlets: 'Coffee Station' },
@@ -190,12 +183,11 @@ function createCore(store) {
       { id: 'rv1', outletId: 'cafe', studentName: 'Sara', rating: 5, text: 'Bowl was ready exactly when I arrived.', at: BASE - 2 * 86400000, verified: true, reply: '', reported: false },
       { id: 'rv2', outletId: 'cafe', studentName: 'Yousef', rating: 3, text: 'Good food but the pickup shelf was confusing.', at: BASE - 4 * 86400000, verified: true, reply: '', reported: false },
       { id: 'rv3', outletId: 'pizza', studentName: 'Mariam', rating: 4, text: 'Tasty, took a bit longer than estimated.', at: BASE - 86400000, verified: true, reply: 'Thanks — we have added an oven slot at lunch.', reported: false },
-      { id: 'rv4', outletId: 'fresh', studentName: 'Hamdan', rating: 5, text: 'Love the SmartSave salads.', at: BASE - 3 * 86400000, verified: true, reply: '', reported: false },
+      { id: 'rv4', outletId: 'fresh', studentName: 'Hamdan', rating: 5, text: 'Love the fresh salads, always ready on time.', at: BASE - 3 * 86400000, verified: true, reply: '', reported: false },
     ];
     s.ledger = [
       { id: 'l1', userId: 's1', delta: 40, reason: 'Welcome bonus', ref: 'demo', at: BASE - 5 * 86400000 },
       { id: 'l2', userId: 's1', delta: 10, reason: 'Reusable Container (verified)', ref: 'demo', at: BASE - 3 * 86400000, type: 'reusable' },
-      { id: 'l3', userId: 's1', delta: 15, reason: 'SmartSave Meal', ref: 'demo', at: BASE - 2 * 86400000, type: 'smartsave' },
       { id: 'l4', userId: 's1', delta: 5, reason: 'Proper Waste Disposal (verified)', ref: 'demo', at: BASE - 86400000, type: 'waste' },
       { id: 'l5', userId: 's2', delta: 20, reason: 'Welcome bonus', ref: 'demo', at: BASE - 86400000 },
     ];
@@ -204,7 +196,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 2) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 3) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -294,11 +286,10 @@ function createCore(store) {
       if (fits) reasons.push('Fits your break: ~' + need + ' of ' + avail + ' min incl. ' + (eat ? eat + ' min to eat' : 'no eating time') + ' and ' + walkBack + ' min walk to ' + bName(to));
       if (d.goals.length) reasons.push('Matches ' + d.goals.join(', '));
       if (prof.favItems.includes(it.id)) reasons.push('One of your favourites');
-      const offer = S.offers.find(f => f.itemId === it.id && f.status === 'active' && f.remaining > 0);
-      const sust = (o.reusable ? 1 : 0) + (offer ? 2 : 0) + (it.tags.includes('Vegan') ? 1 : 0);
+      const sust = (o.reusable ? 1 : 0) + (it.tags.includes('Vegan') ? 1 : 0);
       const pop = popularity(it.id);
       const score = (fits ? 50 : 0) + d.goals.length * 12 + (prof.favItems.includes(it.id) ? 8 : 0) + (prof.favOutlets.includes(o.id) ? 5 : 0) - need * 0.6 - it.price * 0.3 + Math.min(10, pop / 8) + sust * 2;
-      out.push({ item: it, outlet: o, queue: q, ready, need, avail, fits, excluded, reasons, diet: d, score, pop, sust, offer, eligible: excluded.length === 0 });
+      out.push({ item: it, outlet: o, queue: q, ready, need, avail, fits, excluded, reasons, diet: d, score, pop, sust, eligible: excluded.length === 0 });
     });
     const sorters = {
       best: (a, b) => b.score - a.score,
@@ -317,11 +308,10 @@ function createCore(store) {
   function bName(id) { const b = S.buildings.find(b => b.id === id); return b ? b.name : 'your class'; }
 
   // ---------- cart & checkout ----------
-  function cart(actor) { requireStudent(actor); return S.carts[actor] || (S.carts[actor] = { outletId: null, lines: [], offerId: null }); }
+  function cart(actor) { requireStudent(actor); return S.carts[actor] || (S.carts[actor] = { outletId: null, lines: [] }); }
   function addToCart(actor, itemId, qty) {
     return tx(() => {
       const c = cart(actor); const it = item(itemId);
-      if (c.offerId) err('cart', 'Your cart holds a SmartSave claim. Check out or clear it first.');
       if (c.outletId && c.outletId !== it.outletId && c.lines.length) err('cart_outlet', 'Your cart has items from ' + outlet(c.outletId).name + '. Place that order first or clear your cart.');
       if (it.status !== 'available' || it.stock === 0) err('unavailable', it.name + ' is not available');
       c.outletId = it.outletId;
@@ -335,11 +325,11 @@ function createCore(store) {
       const c = cart(actor); const l = c.lines.find(l => l.itemId === itemId); if (!l) err('not_found', 'Not in cart');
       if (qty != null) l.qty = Math.max(0, Math.min(10, qty));
       if (note != null) l.note = String(note).slice(0, 140);
-      c.lines = c.lines.filter(l => l.qty > 0); if (!c.lines.length) { c.outletId = null; c.offerId = null; }
+      c.lines = c.lines.filter(l => l.qty > 0); if (!c.lines.length) { c.outletId = null; }
       return c;
     });
   }
-  function clearCart(actor) { return tx(() => { S.carts[actor] = { outletId: null, lines: [], offerId: null }; }); }
+  function clearCart(actor) { return tx(() => { S.carts[actor] = { outletId: null, lines: [] }; }); }
   function slotLoad(outletId, slot) { return S.orders.filter(o => o.outletId === outletId && o.slot === slot && ACTIVE.includes(o.status)).length; }
   function quote(actor, opts) {
     const c = cart(actor); opts = opts || {};
@@ -347,11 +337,10 @@ function createCore(store) {
     if (!c.lines.length) return { empty: true, problems: ['Your cart is empty'], warnings, lines: [] };
     const o = outlet(c.outletId); const st = outletOpen(o);
     if (!st.open) problems.push(o.name + ' is ' + st.label.toLowerCase());
-    const offer = c.offerId ? S.offers.find(f => f.id === c.offerId) : null;
     const lines = c.lines.map(l => {
-      const it = item(l.itemId); const price = offer && offer.itemId === it.id ? offer.price : it.price;
+      const it = item(l.itemId); const price = it.price;
       if (it.status !== 'available') problems.push(it.name + ' is now ' + it.status);
-      if (it.stock != null && !offer && it.stock < l.qty) problems.push('Only ' + it.stock + ' ' + it.name + ' left');
+      if (it.stock != null && it.stock < l.qty) problems.push('Only ' + it.stock + ' ' + it.name + ' left');
       const d = dietCheck(actor, it); d.block.forEach(b => warnings.push(it.name + ': ' + b)); d.warn.forEach(b => warnings.push(it.name + ': ' + b));
       return { itemId: it.id, name: it.name, price, qty: l.qty, note: l.note, lineTotal: money(price * l.qty), allergens: it.allergens, prep: it.prep };
     });
@@ -375,7 +364,7 @@ function createCore(store) {
     const sl = slots.find(s => s.slot === slot);
     if (!sl) problems.push('No collection slot available today');
     else if (sl.full) problems.push('Slot ' + slot + ' is full');
-    return { outlet: o, lines, subtotal, discount: offer ? money(lines.reduce((a, l) => a + (item(l.itemId).price - l.price) * l.qty, 0)) : 0, fees: null, tax: null, total: subtotal, prepMin, readyIn, slots, slot, method, station, problems, warnings, offer };
+    return { outlet: o, lines, subtotal, discount: 0, fees: null, tax: null, total: subtotal, prepMin, readyIn, slots, slot, method, station, problems, warnings };
   }
   function placeOrder(actor, opts) {
     opts = opts || {};
@@ -386,10 +375,10 @@ function createCore(store) {
       if (q.empty) err('cart', 'Cart is empty');
       if (q.problems.length) err('invalid', q.problems.join('; '));
       if (q.warnings.length && !opts.ackWarnings) err('warnings', 'Please confirm the dietary warnings first');
-      const c = cart(actor); const offer = q.offer;
+      const c = cart(actor);
       if (opts.simulatePaymentFail) { audit(actor, 'payment_failed_sim', c.outletId); err('payment', 'Payment failed — no order created, nothing charged. Try again.'); }
       // reserve stock
-      if (!offer) q.lines.forEach(l => { const it = item(l.itemId); if (it.stock != null) { it.stock -= l.qty; if (it.stock <= 0) { it.stock = 0; it.status = 'soldout'; notifyOutlet(it.outletId, it.name + ' sold out', 'menu'); } else if (it.stock <= 3) notifyOutlet(it.outletId, it.name + ': only ' + it.stock + ' left', 'menu'); } });
+      q.lines.forEach(l => { const it = item(l.itemId); if (it.stock != null) { it.stock -= l.qty; if (it.stock <= 0) { it.stock = 0; it.status = 'soldout'; notifyOutlet(it.outletId, it.name + ' sold out', 'menu'); } else if (it.stock <= 3) notifyOutlet(it.outletId, it.name + ': only ' + it.stock + ' left', 'menu'); } });
       let comp = null;
       if (q.method === 'station') { comp = S.compartments.find(x => x.stationId === q.station.id && x.state === 'free'); comp.state = 'reserved'; }
       const id = 'QB-' + (1000 + S.orders.length + 1); if (comp) comp.orderId = id;
@@ -398,12 +387,11 @@ function createCore(store) {
         method: q.method, stationId: q.station && q.station.id, compartmentId: comp && comp.id, slot: q.slot, prepMin: q.prepMin,
         status: 'submitted', payment: 'sim_authorised', events: [{ s: 'submitted', at: now(), by: actor }], createdAt: now(),
         readyBy: now() + q.readyIn * 60000, token: Math.random().toString(36).slice(2, 8).toUpperCase(), tokenUsed: false,
-        offerId: offer ? offer.id : null, reusable: !!opts.reusable, allergyNote: q.warnings.length ? q.warnings : [], delay: 0, reviewed: false,
+        reusable: !!opts.reusable, allergyNote: q.warnings.length ? q.warnings : [], delay: 0, reviewed: false,
       };
-      if (offer) { offer.reserved = Math.max(0, (offer.reserved || 0) - 1); }
       S.orders.unshift(order);
       if (opts.idemKey) S.idem[opts.idemKey] = id;
-      S.carts[actor] = { outletId: null, lines: [], offerId: null };
+      S.carts[actor] = { outletId: null, lines: [] };
       notify(actor, 'Order ' + id + ' sent to ' + q.outlet.name, 'order:' + id);
       notifyOutlet(q.outlet.id, 'New order ' + id + ' for ' + q.slot, 'orders');
       audit(actor, 'order_submitted', id);
@@ -421,7 +409,7 @@ function createCore(store) {
   function outletOrders(actor, outletId) { requireOutlet(actor, outletId); return S.orders.filter(o => o.outletId === outletId).map(redact); }
 
   function releaseCompartment(o) { if (o.compartmentId) { const c = S.compartments.find(c => c.id === o.compartmentId); if (c && c.orderId === o.id) { c.state = 'free'; c.orderId = null; } } }
-  function restock(o) { if (o.offerId) { const f = S.offers.find(f => f.id === o.offerId); if (f) { f.remaining += 1; if (f.status === 'soldout') f.status = 'active'; } } else o.lines.forEach(l => { const it = S.items.find(i => i.id === l.itemId); if (it && it.stock != null) { it.stock += l.qty; if (it.status === 'soldout') it.status = 'available'; } }); }
+  function restock(o) { o.lines.forEach(l => { const it = S.items.find(i => i.id === l.itemId); if (it && it.stock != null) { it.stock += l.qty; if (it.status === 'soldout') it.status = 'available'; } }); }
   function transition(actor, orderId, to, note) {
     return tx(() => {
       const o = S.orders.find(o => o.id === orderId); if (!o) err('not_found', 'Order not found');
@@ -453,7 +441,6 @@ function createCore(store) {
     releaseCompartment(o);
     const pts = S.config.pointsPerOrder.value;
     award(o.studentId, pts, 'Completed order ' + o.id, 'order:' + o.id, null);
-    if (o.offerId) award(o.studentId, GREEN_TYPES.find(g => g.id === 'smartsave').pts, 'SmartSave Meal (' + o.id + ')', 'ss:' + o.id, 'smartsave');
     if (o.method === 'station') award(o.studentId, GREEN_TYPES.find(g => g.id === 'sustainable_pickup').pts, 'Sustainable Pickup (' + o.id + ')', 'sp:' + o.id, 'sustainable_pickup');
     if (o.reusable) S.evidence.unshift({ id: uid('ev'), userId: o.studentId, type: 'reusable', orderId: o.id, outletId: o.outletId, status: 'pending', at: now(), file: null, note: 'Declared at checkout — outlet to verify' });
     notify(o.studentId, o.id + ' collected. Enjoy! Rate your meal?', 'order:' + o.id);
@@ -513,35 +500,6 @@ function createCore(store) {
       audit(actor, 'item_upsert', it.id); return it;
     });
   }
-
-  // ---------- SmartSave ----------
-  function upsertOffer(actor, data) {
-    return tx(() => {
-      requireOutlet(actor, data.outletId); const it = item(data.itemId); if (it.outletId !== data.outletId) err('forbidden', 'Item not in this outlet');
-      const price = Number(data.price), qty = Number(data.qty);
-      if (!(price > 0) || price >= it.price) err('validation', 'Discounted price must be above 0 and below AED ' + it.price);
-      if (!(qty >= 1)) err('validation', 'Quantity must be at least 1');
-      let f = data.id ? S.offers.find(f => f.id === data.id) : null;
-      if (!f) { f = { id: uid('off'), status: 'draft', remaining: qty }; S.offers.unshift(f); }
-      const claimed = f.qty ? f.qty - f.remaining : 0;
-      Object.assign(f, { outletId: data.outletId, itemId: it.id, orig: it.price, price: money(price), qty, remaining: Math.max(0, qty - claimed), collectBy: data.collectBy || '16:00', validUntil: data.validUntil || '15:30' });
-      audit(actor, 'offer_upsert', f.id); return f;
-    });
-  }
-  function setOfferStatus(actor, id, status) { return tx(() => { const f = S.offers.find(f => f.id === id); requireOutlet(actor, f.outletId); if (!['active', 'withdrawn', 'draft'].includes(status)) err('validation', 'Bad status'); f.status = status; if (status === 'active') S.users.filter(u => u.role === 'student').forEach(u => notify(u.id, 'New SmartSave deal: ' + item(f.itemId).name + ' AED ' + f.price, 'smartsave', 'promotional')); return f; }); }
-  function offerLive(f) { const p = parts(now()); return f.status === 'active' && f.remaining > 0 && p.min < toMin(f.validUntil) && p.day < 5; }
-  function claimOffer(actor, offerId) {
-    return tx(() => {
-      requireStudent(actor); const f = S.offers.find(f => f.id === offerId); if (!f) err('not_found', 'Deal not found');
-      if (f.status !== 'active') err('unavailable', 'This deal is no longer active');
-      if (!offerLive(f)) err('unavailable', f.remaining <= 0 ? 'Sold out — the last portion was just claimed' : 'This deal has expired');
-      const c = cart(actor); if (c.lines.length) err('cart', 'Clear your cart before claiming a SmartSave meal');
-      f.remaining -= 1; f.reserved = (f.reserved || 0) + 1; if (f.remaining === 0) notifyOutlet(f.outletId, 'SmartSave ' + item(f.itemId).name + ' fully claimed', 'smartsave');
-      S.carts[actor] = { outletId: f.outletId, lines: [{ itemId: f.itemId, qty: 1, note: '' }], offerId: f.id, heldAt: now() };
-      return f;
-    });
-  }
-  function releaseClaim(actor) { return tx(() => { const c = cart(actor); if (c.offerId) { const f = S.offers.find(f => f.id === c.offerId); f.remaining += 1; f.reserved = Math.max(0, (f.reserved || 1) - 1); } S.carts[actor] = { outletId: null, lines: [], offerId: null }; }); }
 
   // ---------- points, evidence, rewards ----------
   function balance(userId) { return S.ledger.filter(l => l.userId === userId).reduce((a, l) => a + l.delta, 0); }
@@ -666,9 +624,8 @@ function createCore(store) {
     requireOutlet(actor, outletId); const W = S.waste.filter(w => w.outletId === outletId).sort((a, b) => a.date - b.date);
     const last7 = W.filter(w => w.date >= -7), prev = W.filter(w => w.date < -7 && w.date >= -21);
     const avg = a => a.length ? Math.round(a.reduce((x, w) => x + w.kg, 0) / a.length * 10) / 10 : null;
-    const ss = S.orders.filter(o => o.outletId === outletId && o.offerId && o.status === 'completed');
     const o = outlet(outletId);
-    return { records: W, total7: Math.round(last7.reduce((a, w) => a + w.kg, 0) * 10) / 10, avg7: avg(last7), baseline: o.wasteBaseline != null ? o.wasteBaseline : null, baselineSuggested: avg(prev), ssMeals: ss.length, ssSales: money(ss.reduce((a, x) => a + x.total, 0)) };
+    return { records: W, total7: Math.round(last7.reduce((a, w) => a + w.kg, 0) * 10) / 10, avg7: avg(last7), baseline: o.wasteBaseline != null ? o.wasteBaseline : null, baselineSuggested: avg(prev) };
   }
   function addWaste(actor, outletId, kg, note) { return tx(() => { requireOutlet(actor, outletId); kg = Number(kg); if (!(kg >= 0) || kg > 500) err('validation', 'Enter weight in kg'); const day = Math.floor((now() - BASE) / 86400000); S.waste.push({ id: uid('w'), outletId, date: day, kg: Math.round(kg * 10) / 10, note: note || '', by: actor }); }); }
   function setBaseline(actor, outletId, kg) { return tx(() => { requireOutlet(actor, outletId, true); outlet(outletId).wasteBaseline = kg === '' ? null : Number(kg); }); }
@@ -712,7 +669,7 @@ function createCore(store) {
     get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
     now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
     cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
-    setOutlet, upsertItem, upsertOffer, setOfferStatus, offerLive, claimOffer, releaseClaim,
+    setOutlet, upsertItem,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
     notifications, markRead, setClock, advance, setStation, reset, saveProfile, saveClass, deleteClass, toggleFav,
