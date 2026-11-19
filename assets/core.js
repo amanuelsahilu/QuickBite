@@ -73,7 +73,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 14, seq: 0,
+      demo: true, version: 15, seq: 0,
       clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
       campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
       config: {
@@ -232,11 +232,15 @@ function createCore(store) {
       today(983, 's5', 'Mariam', 'i-cafe-1', 1, 'completed', '09:10', '09:15'),
       today(982, 's2', 'Omar', 'i-cafe-2', 2, 'completed', '10:05', '10:15'),
       today(981, 's4', 'Yousef', 'i-coffee-3', 2, 'completed', '08:40', '08:45'));
+    s.evidence = [
+      { id: 'ev-s1', userId: 's3', type: 'reusable', orderId: 'QB-0982', outletId: 'cafe', status: 'pending', at: BASE + (10 * 60 + 12 - TZ_OFFSET) * 60000, file: null, note: 'Declared at checkout — outlet to verify' },
+      { id: 'ev-s2', userId: 's5', type: 'reusable', orderId: 'QB-0983', outletId: 'cafe', status: 'pending', at: BASE + (9 * 60 + 14 - TZ_OFFSET) * 60000, file: null, note: 'Declared at checkout — outlet to verify' },
+    ];
     return s;
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 14) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 15) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -681,10 +685,11 @@ function createCore(store) {
   function addWaste(actor, outletId, kg, note) { return tx(() => { requireOutlet(actor, outletId); kg = Number(kg); if (!(kg >= 0) || kg > 500) err('validation', 'Enter weight in kg'); const day = Math.floor((now() - BASE) / 86400000); S.waste.push({ id: uid('w'), outletId, date: day, kg: Math.round(kg * 10) / 10, note: note || '', by: actor }); }); }
   function setBaseline(actor, outletId, kg) { return tx(() => { requireOutlet(actor, outletId, true); outlet(outletId).wasteBaseline = kg === '' ? null : Number(kg); }); }
   function sustainability(actor, outletId) {
-    requireOutlet(actor, outletId); const recs = completedRecords(outletId, -7, 1);
+    requireOutlet(actor, outletId); const recs = completedRecords(outletId, -6, 1); // last 7 days incl. today, same window as Sales
     const ev = S.evidence.filter(e => e.outletId === outletId && e.type === 'reusable');
     const verified = recs.filter(r => r.reusable).length;
-    const pts = S.ledger.filter(l => l.delta > 0 && S.orders.some(o => o.outletId === outletId && (l.ref.endsWith(o.id)))).reduce((a, l) => a + l.delta, 0);
+    // points students earned by ordering here: points per completed order, plus the bonus for each verified reusable container
+    const pts = recs.length * S.config.pointsPerOrder.value + verified * GREEN_TYPES.find(g => g.id === 'reusable').pts;
     return { completed: recs.length, reusable: verified, reusableRate: recs.length ? Math.round(verified / recs.length * 100) : null, pendingReusable: ev.filter(e => e.status === 'pending'), pointsIssued: pts, recyclableRate: null, emissions: null };
   }
 

@@ -424,3 +424,8 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .revt{margin:10px 0;font-size:15px}
 .rrep{border-left:3px solid var(--acc);padding-left:10px}
 .rbig em{font-style:normal;color:var(--line)}
+/* restaurant sustainability */
+.ring{flex:none;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--green) calc(var(--p)*1%),var(--soft) 0)}
+.ring b{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:var(--card);font-size:15px;color:var(--green)}
+.vrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.vrow:first-of-type{border-top:0}
+@container (max-width:760px){.g3.kp.kpw{grid-template-columns:minmax(0,1fr)!important}.kpw .rkpi{flex-direction:row;align-items:center}}
