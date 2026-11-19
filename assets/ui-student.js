@@ -209,7 +209,12 @@ const STU_VIEWS = {
     const hd = (icon, t) => '<h3 class="ph">' + '<span class="pi">' + ic(icon) + '</span>' + t + '</h3>';
     const sw = (k, label) => '<label class="sw"><input type="checkbox" data-ch="np" data-k="' + k + '"' + (np[k] ? ' checked' : '') + '><span class="tr" aria-hidden="true"></span>' + label + '</label>';
     return '<h1>Profile</h1><div class="pfp">' +
-      '<div class="card phero"><span class="av">' + esc(u.full.charAt(0)) + '</span><div style="flex:1;min-width:0"><h3 style="margin:0">Account</h3><p style="margin:2px 0 0"><b>' + esc(u.full) + '</b><br><span class="small">Student account</span></p></div><button class="btn" data-a="signout">Sign out</button></div>' +
+      '<div class="card phero"><span class="av">' + esc(u.full.charAt(0)) + '</span><div style="flex:1;min-width:0"><h3 style="margin:0">Account</h3><p style="margin:2px 0 0"><b>' + esc(u.full) + '</b><br><span class="small">Student account</span></p></div><div class="row">' + (sf.editAcct ? '' : '<button class="btn p" data-a="editAcct">Edit profile</button>') + '<button class="btn" data-a="signout">Sign out</button></div></div>' +
+      (sf.editAcct ? '<form class="card pedit" data-form="account"><h3 class="ph"><span class="pi">' + ic('user') + '</span>Edit profile</h3><div class="grid g3">' +
+        '<div><label class="f" for="pf-' + sf.id + '">First name</label><input type="text" id="pf-' + sf.id + '" name="first" required maxlength="40" value="' + esc(u.name) + '"></div>' +
+        '<div><label class="f" for="pl-' + sf.id + '">Last name</label><input type="text" id="pl-' + sf.id + '" name="last" maxlength="40" value="' + esc(u.full.slice(u.name.length).trim()) + '"></div>' +
+        '<div><label class="f" for="pt-' + sf.id + '">Account type</label><input type="text" id="pt-' + sf.id + '" value="Student" readonly></div></div>' +
+        '<div class="row" style="margin-top:14px"><button class="btn p">Save changes</button><button type="button" class="btn" data-a="cancelAcct">Cancel</button></div></form>' : '') +
       '<div class="grid g2">' +
       '<div class="card">' + hd('heart', 'Favourites') + '<p class="small"><b>Restaurants:</b> ' + (p.favOutlets.map(id => '<span class="chip pf">' + esc(C.outlet(id).name) + '</span>').join(' ') || 'none') + '<br><b>Dishes:</b> ' + (p.favItems.map(id => '<span class="chip pf">' + esc(C.item(id).name) + '</span>').join(' ') || 'none') + '</p></div>' +
       '<div class="card">' + hd('leaf', 'Green Points & rewards') + '<p class="ppts"><b class="num">' + C.balance(sf.user) + '</b> points</p><button class="btn" data-a="go" data-r="rewards">Open rewards</button></div>' +
@@ -248,6 +253,7 @@ const STU_MODALS = {
 };
 
 Object.assign(ACTIONS, {
+  editAcct: sf => { sf.editAcct = true; }, cancelAcct: sf => { sf.editAcct = false; },
   cat: (sf, d) => { sf.cat = d.c; }, favOnly: sf => { sf.favOnly = !sf.favOnly; }, clearq: sf => { sf.q = ''; },
   fav: (sf, d) => run(sf, () => C.toggleFav(sf.user, d.k, d.id)),
   add: (sf, d) => { run(sf, () => C.addToCart(sf.user, d.id, 1), () => C.item(d.id).name + ' added to cart'); sf.modal = null; sf.co = null; },
@@ -272,6 +278,7 @@ Object.assign(ACTIONS, {
 });
 Object.assign(FORMS, {
   class: (sf, d) => { const r = run(sf, () => C.saveClass(sf.user, d)); if (r) { sf.editClass = null; sf.day = Number(d.day); toast(sf, r.warnings.length ? 'Saved — check overlap warning' : 'Class saved', !!r.warnings.length); } },
+  account: (sf, d) => { if (run(sf, () => C.updateAccount(sf.user, d), 'Profile updated')) sf.editAcct = false; },
   diet: (sf, d) => run(sf, () => C.saveProfile(sf.user, { prefs: [].concat(d.prefs || []), allergies: [].concat(d.allergies || []), budget: d.budget, breakLen: d.breakLen }), 'Profile saved — recommendations updated'),
   review: (sf, d, el) => run(sf, () => C.addReview(sf.user, el.dataset.id, d.rating, d.text), 'Thanks for rating!'),
   scan: (sf, d, el) => { if (run(sf, () => C.stationCollect(sf.user, el.dataset.id, d.code), 'Compartment opened. Enjoy!')) sf.modal = null; },

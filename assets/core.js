@@ -667,6 +667,14 @@ function createCore(store) {
   function reset() { S = seed(); save(); }
 
   // ---------- student data ----------
+  function updateAccount(actor, d) {
+    return tx(() => {
+      requireStudent(actor); const u = user(actor);
+      const first = String(d.first || '').trim().slice(0, 40), last = String(d.last || '').trim().slice(0, 40);
+      if (!first) err('validation', 'First name is required');
+      u.name = first; u.full = last ? first + ' ' + last : first; return u;
+    });
+  }
   function saveProfile(actor, p) { return tx(() => { requireStudent(actor); const pr = S.profiles[actor] || (S.profiles[actor] = { prefs: [], allergies: [], budget: null, breakLen: null, favOutlets: [], favItems: [] }); if (p.prefs) pr.prefs = p.prefs.filter(x => PREFS.includes(x)); if (p.allergies) pr.allergies = p.allergies.filter(x => ALLERGENS.includes(x)); if ('budget' in p) pr.budget = p.budget === '' ? null : Math.max(5, Math.min(200, Number(p.budget))); if ('breakLen' in p) pr.breakLen = Number(p.breakLen) || null; return pr; }); }
   function saveClass(actor, c) {
     return tx(() => {
@@ -691,7 +699,7 @@ function createCore(store) {
     setOutlet, upsertItem,
     balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
-    notifications, markRead, setClock, advance, setStation, reset, saveProfile, saveClass, deleteClass, toggleFav,
+    notifications, markRead, setClock, advance, setStation, reset, updateAccount, saveProfile, saveClass, deleteClass, toggleFav,
     myOutlets(actor) { return S.memberships.filter(m => m.userId === actor).map(m => Object.assign({ role: m.role }, outlet(m.outletId))); },
   };
 }
