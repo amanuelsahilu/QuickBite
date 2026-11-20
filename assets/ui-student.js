@@ -1,6 +1,6 @@
 /* ---------- student views ---------- */
 const CATS = [['bowl', 'Bowls'], ['wrap', 'Wraps'], ['salad', 'Salads'], ['pizza', 'Pizza'], ['sandwich', 'Sandwiches'], ['drink', 'Drinks'], ['pastry', 'Pastries']];
-const SORTS = [['best', 'Best Match', 'Weighted score: fits your break (+50), matches nutrition goals (+12 each), favourites, shorter total time, lower price, popularity and sustainability. Weights are demo values awaiting approval.'], ['fastest', 'Fastest', 'Lowest total time: order lead + max(queue wait + prep, walk to outlet) + eating time + walk to next class.'], ['cheapest', 'Cheapest', 'Lowest current menu price.'], ['healthiest', 'Healthiest', 'Lowest calories — only items whose outlet supplied nutrition. Items without supplied data are not ranked.'], ['protein', 'High Protein', 'Most protein grams — only items with supplied nutrition.'], ['popular', 'Most Popular', 'Most completed orders in demo history.'], ['sustainable', 'Most Sustainable', 'Score: outlet offers reusable packaging (+1), vegan (+1). Engagement score, not measured impact.']];
+const SORTS = [['best', 'Best Match'], ['fastest', 'Fastest'], ['cheapest', 'Cheapest'], ['healthiest', 'Healthiest'], ['protein', 'High Protein'], ['popular', 'Most Popular'], ['sustainable', 'Most Sustainable']];
 const bName = id => C.bName(id);
 
 function diningLine(r) {
@@ -89,7 +89,6 @@ const STU_VIEWS = {
 
   ai(sf) {
     const sort = sf.sort || 'best'; const rec = C.recommend(sf.user, { sort, runningLate: !!sf.late }); const top = rec.list[0];
-    const def = SORTS.find(s => s[0] === sort);
     return '' +
       '<div class="row" style="margin:8px 0"><div class="tog" role="group" aria-label="Rank by">' + SORTS.map(s => '<button data-a="sort" data-s="' + s[0] + '" aria-pressed="' + (sort === s[0]) + '">' + s[1] + '</button>').join('') + '</div></div>' +
       '<div class="row" style="margin-bottom:10px"><button class="cb" data-a="late" aria-pressed="' + !!sf.late + '" style="' + (sf.late ? 'background:var(--sel);color:var(--selink)' : '') + '">' + ic('clock') + ' Running Late mode: ' + (sf.late ? 'on' : 'off') + '</button><span class="small muted">' + (sf.late ? 'No time to eat: order, pick up and head straight to class.' : 'Allows ' + C.S.config.timing.eatBufferMin + ' min to eat.') + '</span></div>' +
@@ -269,11 +268,10 @@ Object.assign(ACTIONS, {
   delClass: (sf, d) => run(sf, () => C.deleteClass(sf.user, d.id), 'Class removed'),
   qty: (sf, d) => { const l = C.cart(sf.user).lines.find(l => l.itemId === d.id); run(sf, () => C.updateLine(sf.user, d.id, Number(d.n) === -99 ? 0 : l.qty + Number(d.n))); },
   method: (sf, d) => { sf.co.method = d.m; sf.co.slot = null; },
-  place: sf => { const co = sf.co; const o = run(sf, () => C.placeOrder(sf.user, { method: co.method, stationId: co.stationId, slot: co.slot, idemKey: co.fail ? null : co.idem, ackWarnings: co.ack, reusable: co.reusable, simulatePaymentFail: co.fail })); if (o) { sf.co = null; go(sf, 'order', { id: o.id }); toast(sf, 'Order ' + o.id + ' sent'); } },
+  place: sf => { const co = sf.co; const o = run(sf, () => C.placeOrder(sf.user, { method: co.method, stationId: co.stationId, slot: co.slot, idemKey: co.idem, ackWarnings: co.ack, reusable: co.reusable })); if (o) { sf.co = null; go(sf, 'order', { id: o.id }); toast(sf, 'Order ' + o.id + ' sent'); } },
   cancelOrder: (sf, d) => run(sf, () => C.transition(sf.user, d.id, 'cancelled', 'Cancelled by student'), 'Order cancelled'),
   reorder: (sf, d) => { const o = C.getOrder(sf.user, d.id); let added = 0; const miss = []; o.lines.forEach(l => { try { C.addToCart(sf.user, l.itemId, l.qty); added++; } catch (e) { miss.push(l.name + ': ' + e.message); } }); sf.co = null; go(sf, 'cart'); if (miss.length) toast(sf, miss.join('; '), true); else toast(sf, 'Added to cart with current prices'); },
   stationScan: (sf, d) => { sf.modal = { type: 'scan', id: d.id }; },
-  simVerify: (sf, d) => run(sf, () => C.reviewEvidence(sf.user, d.id, 'verified', true), 'Verified (simulated)'),
   redeemAsk: (sf, d) => { sf.modal = { type: 'redeem', id: d.id, key: 'rd-' + Date.now() }; },
   redeem: (sf, d) => { const r = run(sf, () => C.redeem(sf.user, d.id, d.k)); if (r) { sf.modal = null; toast(sf, 'Redeemed! Code ' + r.code); } },
   exportMe: sf => { const S = C.S; const me = { user: C.user(sf.user), profile: S.profiles[sf.user], schedule: S.schedules[sf.user], orders: C.myOrders(sf.user), points: S.ledger.filter(l => l.userId === sf.user), evidence: S.evidence.filter(e => e.userId === sf.user), redemptions: S.redemptions.filter(r => r.userId === sf.user) }; sf.modal = { type: 'copy', title: 'Your data (demo)', text: JSON.stringify(me, null, 2) }; },
@@ -294,6 +292,6 @@ Object.assign(FORMS, {
 Object.assign(CHANGES, {
   note: (sf, v, el) => run(sf, () => C.updateLine(sf.user, el.dataset.id, null, v)),
   station: (sf, v) => { sf.co.stationId = v; }, slot: (sf, v) => { sf.co.slot = v; },
-  reusable: (sf, v, el) => { sf.co.reusable = el.checked; }, ack: (sf, v, el) => { sf.co.ack = el.checked; }, failpay: (sf, v, el) => { sf.co.fail = el.checked; },
+  reusable: (sf, v, el) => { sf.co.reusable = el.checked; }, ack: (sf, v, el) => { sf.co.ack = el.checked; },
   np: (sf, v, el) => { sf.np[el.dataset.k] = el.checked; },
 });

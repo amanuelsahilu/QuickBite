@@ -1,5 +1,5 @@
-/* QuickBite demo backend (in-browser simulator).
-   One source of truth for website and app surfaces. All records are DEMO records.
+/* QuickBite data layer, running in the browser with sample data.
+   One source of truth for the student and restaurant screens.
    Every public function takes an actor (user id) and enforces permissions itself. */
 function createCore(store) {
   const KEY = 'quickbite-demo-v1';
@@ -32,17 +32,13 @@ function createCore(store) {
   ];
 
   let S = null;
-  let listeners = [];
 
   // ---------- utilities ----------
   function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
   function uid(p) { S.seq = (S.seq || 0) + 1; return p + S.seq.toString(36).padStart(4, '0'); }
   function err(code, msg) { const e = new Error(msg); e.code = code; throw e; }
   function money(n) { return Math.round(n * 100) / 100; }
-  function now() {
-    if (S.clock.mode === 'real') return Date.now();
-    return BASE + (S.clock.day * 1440 + S.clock.min - TZ_OFFSET) * 60000;
-  }
+  function now() { return BASE + (S.clock.day * 1440 + S.clock.min - TZ_OFFSET) * 60000; }
   function parts(ts) { const m = Math.floor((ts - BASE) / 60000) + TZ_OFFSET; const dm = ((m % 10080) + 10080) % 10080; return { day: Math.floor(dm / 1440), min: dm % 1440 }; }
   function hm(min) { min = ((min % 1440) + 1440) % 1440; return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0'); }
   function toMin(s) { const [h, m] = s.split(':').map(Number); return h * 60 + m; }
@@ -65,7 +61,7 @@ function createCore(store) {
     S.notifications.unshift({ id: uid('n'), userId, text, link: link || '', at: now(), read: false, kind: kind || 'transactional' });
   }
   function notifyOutlet(outletId, text, link) { S.memberships.filter(m => m.outletId === outletId).forEach(m => notify(m.userId, text, link, 'operational')); }
-  function save() { try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) { } listeners.forEach(f => f()); }
+  function save() { try { store && store.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
   function tx(fn) { // all-or-nothing mutation
     const snap = JSON.stringify(S);
     try { const r = fn(); save(); return r; } catch (e) { S = JSON.parse(snap); throw e; }
@@ -74,12 +70,11 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 16, seq: 0,
-      clock: { mode: 'demo', day: 0, min: 11 * 60 + 35 },
-      campus: { id: 'campus-demo', name: 'Campus', currency: 'AED', tz: 'Asia/Dubai' },
+      demo: true, version: 17, seq: 0,
+      clock: { day: 0, min: 11 * 60 + 35 },
       config: {
-        timing: { eatBufferMin: 10, orderLeadMin: 2, runningLateBufferMin: 3, status: 'demo value — awaiting approval' },
-        pointsPerOrder: { value: 5, status: 'demo value — awaiting approval' },
+        timing: { eatBufferMin: 10, orderLeadMin: 2 },
+        pointsPerOrder: { value: 5 },
         slotMinutes: 15,
       },
       buildings: [
@@ -167,7 +162,7 @@ function createCore(store) {
     I('coffee', 3, 'Zaatar Croissant', 'pastry', 9, 4, ['Vegetarian', 'Halal'], ['Gluten/wheat', 'Milk/dairy', 'Sesame'], { desc: 'Butter croissant with zaatar.', stock: 12 });
     I('coffee', 4, 'Date Muffin', 'pastry', 10, 1, ['Vegetarian', 'Halal'], null, { desc: 'Allergen information not yet declared by outlet.', stock: 0, status: 'soldout' });
 
-    s.stations.forEach(st => { for (let i = 1; i <= st.comps; i++) s.compartments.push({ id: st.id + '-' + i, stationId: st.id, n: i, state: (i % 5 === 0) ? 'occupied-demo' : 'free', orderId: null, tempC: st.state === 'operational' ? null : null }); });
+    s.stations.forEach(st => { for (let i = 1; i <= st.comps; i++) s.compartments.push({ id: st.id + '-' + i, stationId: st.id, n: i, state: (i % 5 === 0) ? 'occupied-demo' : 'free', orderId: null }); });
 
     s.rewards = [
       { id: 'rw1', name: 'AED 5 food voucher', cost: 100, stock: 50, terms: 'Valid at participating outlets for 30 days.', outlets: 'All participating outlets' },
@@ -209,7 +204,7 @@ function createCore(store) {
     const past = (n, itemId, qty, method, stationId, daysAgo, hhmm) => {
       const it = s.items.find(x => x.id === itemId); const at = BASE + ((-daysAgo) * 1440 + toMin(hhmm) - TZ_OFFSET) * 60000; const total = it.price * qty;
       return { id: 'QB-0' + n, studentId: 's1', studentName: 'Aisha', outletId: it.outletId, lines: [{ itemId: it.id, name: it.name, price: it.price, qty, note: '', lineTotal: total, allergens: it.allergens, prep: it.prep }],
-        subtotal: total, discount: 0, total, method, stationId: stationId || null, compartmentId: null, slot: hm(toMin(hhmm) + 10), prepMin: it.prep * qty,
+        subtotal: total, total, method, stationId: stationId || null, compartmentId: null, slot: hm(toMin(hhmm) + 10), prepMin: it.prep * qty,
         status: 'completed', payment: 'sim_captured', events: [{ s: 'submitted', at, by: 's1' }, { s: 'accepted', at: at + 60000, by: 'staff' }, { s: 'preparing', at: at + 120000, by: 'staff' }, { s: 'ready', at: at + 300000, by: 'staff' }, { s: 'collected', at: at + 480000, by: 'staff' }, { s: 'completed', at: at + 480000, by: 'system' }],
         createdAt: at, readyBy: at + 300000, token: 'H' + n, tokenUsed: true, reusable: false, allergyNote: [], delay: 0, reviewed: true };
     };
@@ -219,7 +214,7 @@ function createCore(store) {
     const today = (n, sid, name, itemId, qty, status, at, slot) => {
       const it = s.items.find(x => x.id === itemId); const t = BASE + (toMin(at) - TZ_OFFSET) * 60000; const total = it.price * qty; const upto = flow.indexOf(status);
       return { id: 'QB-0' + n, studentId: sid, studentName: name, outletId: it.outletId, lines: [{ itemId: it.id, name: it.name, price: it.price, qty, note: '', lineTotal: total, allergens: it.allergens, prep: it.prep }],
-        subtotal: total, discount: 0, total, method: 'counter', stationId: null, compartmentId: null, slot, prepMin: it.prep * qty, status, payment: status === 'completed' ? 'sim_captured' : 'sim_authorised',
+        subtotal: total, total, method: 'counter', stationId: null, compartmentId: null, slot, prepMin: it.prep * qty, status, payment: status === 'completed' ? 'sim_captured' : 'sim_authorised',
         events: flow.slice(0, upto + 1).map((st, i) => ({ s: st, at: t + i * 120000, by: i ? 'staff' : sid })), createdAt: t, readyBy: status === 'completed' ? t + 300000 : Math.max(t + (it.prep * qty + 5) * 60000, BASE + (NOW + 1 - TZ_OFFSET) * 60000),
         token: 'T' + n, tokenUsed: status === 'completed', reusable: false, allergyNote: [], delay: 0, reviewed: status === 'completed' };
     };
@@ -241,7 +236,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 16) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 17) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -268,7 +263,7 @@ function createCore(store) {
     const work = live.reduce((a, x) => a + x.prepMin, 0) + (st.open ? o.baseline * avgPrep : 0);
     const wait = Math.ceil(work / o.parallel);
     const level = !st.open ? 'closed' : wait < 8 ? 'short' : wait < 16 ? 'moderate' : 'busy';
-    return { count, liveCount: live.length, baseline: st.open ? o.baseline : 0, wait, avgPrep, total: wait + avgPrep, level, open: st.open, label: st.label, source: 'Calculated from demo orders + simulated baseline of ' + o.baseline + ' (not live)' };
+    return { count, wait, avgPrep, level, open: st.open, label: st.label };
   }
   function nextBreak(actor) {
     requireStudent(actor);
@@ -317,26 +312,22 @@ function createCore(store) {
       const o = outlet(it.outletId); const st = outletOpen(o, now() + startDelay * 60000);
       const q = queueInfo(o.id);
       const d = dietCheck(actor, it);
-      const reasons = [], excluded = [];
+      const excluded = [];
       if (!st.open) excluded.push(o.name + ' ' + st.label.toLowerCase());
       if (!ORDERABLE.includes(it.status) || it.stock === 0) excluded.push('Sold out / unavailable');
       if (prof.budget && it.price > prof.budget) excluded.push('Over your AED ' + prof.budget + ' budget');
       d.block.forEach(b => excluded.push(b)); if (d.unknown) excluded.push('Allergen info not declared');
-      const walkTo = walk(from, o.building), walkBack = walk(o.building, to);
-      const ready = Math.max(q.wait + it.prep, walkTo) + cfg.orderLeadMin; // food is prepared while walking
+      const walkBack = walk(o.building, to);
       // simple break model: order, pick up, then eat (or head straight to class when running late)
       const eat = opts.runningLate ? 0 : cfg.eatBufferMin;
       const head = opts.runningLate ? Math.min(HEAD_MAX_MIN, walkBack) : 0;
       const need = cfg.orderLeadMin + PICKUP_MIN + eat + head;
       const fits = avail == null ? null : need <= avail;
       if (fits === false) excluded.push('Needs ' + need + ' min, you have ' + avail);
-      if (fits) reasons.push('Fits your break: ~' + need + ' of ' + avail + ' min incl. ' + (eat ? eat + ' min to eat' : head + ' min to head to class'));
-      if (d.goals.length) reasons.push('Matches ' + d.goals.join(', '));
-      if (prof.favItems.includes(it.id)) reasons.push('One of your favourites');
       const sust = (o.reusable ? 1 : 0) + (it.tags.includes('Vegan') ? 1 : 0);
       const pop = popularity(it.id);
       const score = (fits ? 50 : 0) + d.goals.length * 12 + (prof.favItems.includes(it.id) ? 8 : 0) + (prof.favOutlets.includes(o.id) ? 5 : 0) - need * 0.6 - it.price * 0.3 + Math.min(10, pop / 8) + sust * 2;
-      out.push({ item: it, outlet: o, queue: q, ready, need, head, avail, fits, excluded, reasons, diet: d, score, pop, sust, eligible: excluded.length === 0 });
+      out.push({ item: it, outlet: o, queue: q, need, head, avail, fits, excluded, diet: d, score, pop, sust, eligible: excluded.length === 0 });
     });
     const sorters = {
       best: (a, b) => b.score - a.score,
@@ -376,7 +367,6 @@ function createCore(store) {
       return c;
     });
   }
-  function clearCart(actor) { return tx(() => { S.carts[actor] = { outletId: null, lines: [] }; }); }
   function strHash(t) { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
   // orders booked into a pickup slot: real orders plus simulated bookings from other students (fixed per outlet and slot)
   function slotUse(outletId, slot) { const o = outlet(outletId); return Math.min(o.capacityPerSlot, slotLoad(outletId, slot) + strHash(outletId + slot) % (o.capacityPerSlot + 2)); }
@@ -415,12 +405,11 @@ function createCore(store) {
       else if (station.state !== 'operational') problems.push(station.name + ' is ' + station.state);
       else if (!S.compartments.some(x => x.stationId === station.id && x.state === 'free')) problems.push(station.name + ' is full');
     }
-    if (method === 'delivery') problems.push('Campus delivery is not available yet');
     const slot = opts.slot || (slots.find(s => !s.full) || {}).slot;
     const sl = slots.find(s => s.slot === slot);
     if (!sl) problems.push('No collection slot available today');
     else if (sl.full) problems.push('Slot ' + slot + ' is full');
-    return { outlet: o, lines, subtotal, discount: 0, fees: null, tax: null, total: subtotal, prepMin, readyIn, slots, slot, method, station, problems, warnings };
+    return { outlet: o, lines, subtotal, total: subtotal, prepMin, readyIn, slots, slot, method, station, problems, warnings };
   }
   function placeOrder(actor, opts) {
     opts = opts || {};
@@ -431,15 +420,13 @@ function createCore(store) {
       if (q.empty) err('cart', 'Cart is empty');
       if (q.problems.length) err('invalid', q.problems.join('; '));
       if (q.warnings.length && !opts.ackWarnings) err('warnings', 'Please confirm the dietary warnings first');
-      const c = cart(actor);
-      if (opts.simulatePaymentFail) { audit(actor, 'payment_failed_sim', c.outletId); err('payment', 'Payment failed — no order created, nothing charged. Try again.'); }
       // reserve stock
       q.lines.forEach(l => { const it = item(l.itemId); if (it.stock != null) { it.stock -= l.qty; if (it.stock <= 0) { it.stock = 0; it.status = 'soldout'; notifyOutlet(it.outletId, it.name + ' sold out', 'menu'); } else if (it.stock <= 3) notifyOutlet(it.outletId, it.name + ': only ' + it.stock + ' left', 'menu'); } });
       let comp = null;
       if (q.method === 'station') { comp = S.compartments.find(x => x.stationId === q.station.id && x.state === 'free'); comp.state = 'reserved'; }
       const id = 'QB-' + (1000 + S.orders.length + 1); if (comp) comp.orderId = id;
       const order = {
-        id, studentId: actor, studentName: st.name, outletId: q.outlet.id, lines: q.lines, subtotal: q.subtotal, discount: q.discount, total: q.total,
+        id, studentId: actor, studentName: st.name, outletId: q.outlet.id, lines: q.lines, subtotal: q.subtotal, total: q.total,
         method: q.method, stationId: q.station && q.station.id, compartmentId: comp && comp.id, slot: q.slot, prepMin: q.prepMin,
         status: 'submitted', payment: 'sim_authorised', events: [{ s: 'submitted', at: now(), by: actor }], createdAt: now(),
         readyBy: now() + q.readyIn * 60000, token: Math.random().toString(36).slice(2, 8).toUpperCase(), tokenUsed: false,
@@ -588,18 +575,17 @@ function createCore(store) {
       S.evidence.unshift(ev); audit(actor, 'evidence_submit', ev.id); return ev;
     });
   }
-  function reviewEvidence(actor, evId, decision, demoOverride) {
+  function reviewEvidence(actor, evId, decision) {
     return tx(() => {
       const ev = S.evidence.find(e => e.id === evId); if (!ev) err('not_found', 'Not found');
       if (ev.status !== 'pending') err('state', 'Already ' + ev.status);
-      if (!demoOverride) { if (!ev.outletId) err('forbidden', 'No verifier is defined for this action yet'); requireOutlet(actor, ev.outletId); }
-      ev.status = decision; ev.decidedAt = now(); ev.decidedBy = demoOverride ? 'demo-simulator' : actor;
+      if (!ev.outletId) err('forbidden', 'No verifier is defined for this action yet'); requireOutlet(actor, ev.outletId);
+      ev.status = decision; ev.decidedAt = now(); ev.decidedBy = actor;
       const t = GREEN_TYPES.find(g => g.id === ev.type);
       if (decision === 'verified') award(ev.userId, t.pts, t.name + ' (verified)', 'ev:' + ev.id, t.id);
       notify(ev.userId, t.name + ' evidence ' + decision, 'sustainability'); return ev;
     });
   }
-  function reversePoints(actor, ledgerRef, reason) { return tx(() => { const e = S.ledger.find(l => l.ref === ledgerRef && l.delta > 0); if (!e) err('not_found', 'Nothing to reverse'); if (S.ledger.some(l => l.ref === 'rev:' + ledgerRef)) err('duplicate', 'Already reversed'); const amt = Math.min(e.delta, balance(e.userId)); S.ledger.unshift({ id: uid('l'), userId: e.userId, delta: -amt, reason: 'Reversal: ' + reason, ref: 'rev:' + ledgerRef, at: now() }); return amt; }); }
   function redeem(actor, rewardId, idemKey) {
     if (idemKey && S.idem[idemKey]) return S.redemptions.find(r => r.id === S.idem[idemKey]);
     return tx(() => {
@@ -643,7 +629,7 @@ function createCore(store) {
     const gross = money(recs.reduce((a, x) => a + x.total, 0)); const refunds = money(recs.filter(x => x.refunded).reduce((a, x) => a + x.total, 0));
     const dish = {}; recs.forEach(x => { (x.lines || [{ name: x.name, qty: x.qty, lineTotal: x.total }]).forEach(l => { dish[l.name] = dish[l.name] || { name: l.name, qty: 0, gross: 0 }; dish[l.name].qty += l.qty; dish[l.name].gross += l.lineTotal || x.total; }); });
     const best = daily.reduce((a, b) => b.gross > a.gross ? b : a, daily[0]);
-    return { days, daily, gross, refunds, orders: recs.length, aov: recs.length ? money(gross / recs.length) : null, best, dishes: Object.values(dish).sort((a, b) => b.qty - a.qty).slice(0, 6), commission: null, fees: null, net: null };
+    return { days, daily, gross, refunds, orders: recs.length, aov: recs.length ? money(gross / recs.length) : null, best, dishes: Object.values(dish).sort((a, b) => b.qty - a.qty).slice(0, 6) };
   }
   function forecast(actor, outletId, opts) {
     requireOutlet(actor, outletId); opts = opts || {}; const o = outlet(outletId);
@@ -686,9 +672,7 @@ function createCore(store) {
     const dt = (w, d) => wk[w][d].reduce((x, y) => x + y, 0);
     for (let d = 0; d < 5; d++) { const pred = (dt(0, d) + dt(1, d)) / 2; err += Math.abs(pred - dt(2, d)); act += dt(2, d); }
     const accuracy = act ? Math.max(0, Math.round((1 - err / act) * 100)) : null;
-    const lastWeek = wk[2].map(r => r.reduce((a, b) => a + b, 0));
-    const shortages = prep.filter(p => p.stock != null).map(p => ({ name: p.name, stock: p.stock, perDay: p.expected, risk: p.stock < p.make }));
-    return { grid, lo, hi, days, weekly, daily: Math.round(days.slice(0, 5).reduce((a, d) => a + d.orders, 0) / 5), peak: { day: DAYS[peak.d], from: hm((peak.h + H0) * 60), to: hm((peak.h + H0 + 1) * 60), v: peak.v }, pop, capHour, overCap: peak.v > capHour, shortages, prep, prepDay: pd, accuracy, lastWeek, adjust: Math.round((adjust - 1) * 100), buffer: Math.round((buffer - 1) * 100), H0 };
+    return { grid, lo, hi, days, weekly, daily: Math.round(days.slice(0, 5).reduce((a, d) => a + d.orders, 0) / 5), peak: { day: DAYS[peak.d], from: hm((peak.h + H0) * 60), to: hm((peak.h + H0 + 1) * 60), v: peak.v }, pop, capHour, prep, prepDay: pd, accuracy, H0 };
   }
   function wasteSummary(actor, outletId) {
     requireOutlet(actor, outletId); const W = S.waste.filter(w => w.outletId === outletId).sort((a, b) => a.date - b.date);
@@ -705,17 +689,14 @@ function createCore(store) {
     const verified = recs.filter(r => r.reusable).length;
     // points students earned by ordering here: points per completed order, plus the bonus for each verified reusable container
     const pts = recs.length * S.config.pointsPerOrder.value + verified * GREEN_TYPES.find(g => g.id === 'reusable').pts;
-    return { completed: recs.length, reusable: verified, reusableRate: recs.length ? Math.round(verified / recs.length * 100) : null, pendingReusable: ev.filter(e => e.status === 'pending'), pointsIssued: pts, recyclableRate: null, emissions: null };
+    return { completed: recs.length, reusable: verified, reusableRate: recs.length ? Math.round(verified / recs.length * 100) : null, pendingReusable: ev.filter(e => e.status === 'pending'), pointsIssued: pts };
   }
 
   // ---------- notifications ----------
   function notifications(actor) { return S.notifications.filter(n => n.userId === actor); }
   function markRead(actor) { return tx(() => S.notifications.forEach(n => { if (n.userId === actor) n.read = true; })); }
 
-  // ---------- demo-only controls ----------
-  function setClock(c) { return tx(() => Object.assign(S.clock, c)); }
-  function advance(min) { return tx(() => { if (S.clock.mode !== 'demo') return; S.clock.min += min; while (S.clock.min >= 1440) { S.clock.min -= 1440; S.clock.day = (S.clock.day + 1) % 7; } }); }
-  function setStation(stationId, state) { return tx(() => { const st = S.stations.find(s => s.id === stationId); st.state = state; S.orders.filter(o => o.stationId === stationId && ACTIVE.includes(o.status)).forEach(o => { notify(o.studentId, st.name + ' is ' + state + '. ' + o.id + ' may need counter pickup.', 'order:' + o.id); notifyOutlet(o.outletId, st.name + ' ' + state + ' — affects ' + o.id, 'orders'); }); }); }
+  // ---------- sample data ----------
   function reset() { S = seed(); save(); }
 
   // ---------- student data ----------
@@ -746,15 +727,14 @@ function createCore(store) {
 
   load();
   return {
-    DAYS, PREFS, ALLERGENS, HARD_PREFS, GREEN_TYPES, TRANSITIONS,
-    get S() { return S; }, on(f) { listeners.push(f); }, reload() { load(); listeners.forEach(f => f()); },
-    MAX_PRICE, PICKUP_MIN, HEAD_MAX_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
-    cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
+    DAYS, PREFS, ALLERGENS, GREEN_TYPES,
+    get S() { return S; }, reload() { load(); },
+    MAX_PRICE, PICKUP_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
+    cart, addToCart, updateLine, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem, setItemStatus, setItemTags, ORDERABLE,
-    balance, submitEvidence, reviewEvidence, reversePoints, redeem, badges, level,
+    balance, submitEvidence, reviewEvidence, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
-    notifications, markRead, setClock, advance, setStation, reset, updateAccount, saveProfile, saveClass, deleteClass, toggleFav,
+    notifications, markRead, reset, updateAccount, saveProfile, saveClass, deleteClass, toggleFav,
     myOutlets(actor) { return S.memberships.filter(m => m.userId === actor).map(m => Object.assign({ role: m.role }, outlet(m.outletId))); },
   };
 }
-if (typeof module !== 'undefined') module.exports = { createCore };

@@ -100,7 +100,7 @@ const STU_TABS = [['dashboard', 'Home', 'home'], ['marketplace', 'Food', 'store'
 const RES_TABS = [['rdash', 'Home', 'home'], ['rorders', 'Orders', 'list'], ['rmenu', 'Menu', 'store'], ['rsales', 'Sales', 'chart'], ['more', 'More', 'menu']];
 const isStu = sf => C.user(sf.user).role === 'student';
 function curOutlet(sf) { const mine = C.myOutlets(sf.user); if (!sf.outlet || !mine.some(o => o.id === sf.outlet)) sf.outlet = mine[0] && mine[0].id; return sf.outlet; }
-function go(sf, route, p) { sf.route = route; sf.p = p || {}; sf.modal = null; sf._nav = true; if (sf.id === 'main' && APP.mode === 'app') { /* keep hash simple */ } }
+function go(sf, route, p) { sf.route = route; sf.p = p || {}; sf.modal = null; sf._nav = true; }
 function toast(sf, msg, isErr) { sf.toast = { msg, e: !!isErr, at: Date.now() }; clearTimeout(sf.tt); sf.tt = setTimeout(() => { sf.toast = null; renderAll(); }, isErr ? 4200 : 2600); }
 function run(sf, fn, okMsg) { try { const r = fn(); if (okMsg) toast(sf, typeof okMsg === 'function' ? okMsg(r) : okMsg); return r; } catch (e) { toast(sf, e.message, true); return undefined; } }
 
@@ -150,30 +150,18 @@ function renderModal(sf) {
 }
 
 /* ---------- top-level render ---------- */
-function demoBar() {
-  const S = C.S; const p = C.parts(C.now());
-  const users = S.users.map(u => '<option value="' + u.id + '"' + (APP.sf.main.user === u.id ? ' selected' : '') + '>' + esc(u.full) + '</option>').join('');
-  return '<div class="demobar' + (APP.dbOpen ? ' open' : '') + '" role="region" aria-label="Demo controls"><b class="lab">DEMO BUILD · sample data only, no real orders or payments</b><button class="dbt" data-a="dbt" aria-expanded="' + !!APP.dbOpen + '">Demo controls</button><div class="dgrp">' +
-    (window.QB_NATIVE ? '<span class="grp"><button data-a="mode" data-m="app"' + (APP.mode === 'app' ? ' class="on"' : '') + '>App</button><button data-a="mode" data-m="project"' + (APP.mode === 'project' ? ' class="on"' : '') + '>Project status</button></span>' : '') +
-    (window.QB_NATIVE ? '' : '<span class="grp"><button data-a="mode" data-m="landing"' + (APP.mode === 'landing' ? ' class="on"' : '') + '>Home</button><button data-a="mode" data-m="app"' + (APP.mode === 'app' ? ' class="on"' : '') + '>Website</button><button data-a="mode" data-m="project"' + (APP.mode === 'project' ? ' class="on"' : '') + '>Project status</button></span>') +
-    (APP.mode === 'app' ? '<span class="grp"><label for="who">Signed in as</label><select id="who" data-ch="who">' + users + '</select></span>' : '') +
-    '<span class="grp">Campus clock <b class="num">' + C.DAYS[p.day] + ' ' + C.hm(p.min) + '</b>' + (S.clock.mode === 'demo' ? '<button data-a="adv" data-n="5">+5 min</button><button data-a="adv" data-n="30">+30</button><button data-a="clock" data-m="real">Use real time</button>' : '<button data-a="clock" data-m="demo">Use demo time</button>') + '</span>' +
-    '<span class="grp"><button data-a="reset">Reset demo data</button></span></div></div>';
-}
 function renderAll() {
   const keep = {}; document.querySelectorAll('[data-sf]').forEach(el => { const c = el.querySelector('.content'); keep[el.dataset.sf] = { s: el.scrollTop, c: c ? c.scrollTop : 0, w: window.scrollY }; });
   const ae = document.activeElement; const fid = ae && ae.id; const sel = ae && ae.selectionStart;
   const root = document.getElementById('root'); let h = '';
   if (APP.mode === 'landing') h += LANDING();
-  else if (APP.mode === 'project') h += PROJECT();
   else h += '<div class="surface fixedm" data-sf="main">' + renderSurface(APP.sf.main) + '</div>';
   root.innerHTML = h;
   document.querySelectorAll('[data-sf]').forEach(el => { const s = APP.sf[el.dataset.sf]; const k = keep[el.dataset.sf]; if (s && s._nav) { el.scrollTop = 0; if (el.dataset.sf === 'main') window.scrollTo(0, 0); s._nav = false; } else if (k) { el.scrollTop = k.s; } });
   if (fid) { const n = document.getElementById(fid); if (n) { n.focus(); try { if (sel != null) n.setSelectionRange(sel, sel); } catch (e) { } } }
 }
-C.on(() => { });
 function setHash() { const h = APP.mode === 'landing' ? '' : APP.mode === 'app' ? (isStu(APP.sf.main) ? 'student' : 'restaurant') : APP.mode; try { history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) { } }
-function fromHash() { const h = (location.hash || '').slice(1); if (h === 'student') { APP.mode = 'app'; APP.sf.main.user = 's1'; go(APP.sf.main, 'dashboard'); } else if (h === 'restaurant') { APP.mode = 'app'; APP.sf.main.user = 'r1'; go(APP.sf.main, 'rdash'); } else if (h === 'project') APP.mode = h; else APP.mode = 'landing'; }
+function fromHash() { const h = (location.hash || '').slice(1); if (h === 'student') { APP.mode = 'app'; APP.sf.main.user = 's1'; go(APP.sf.main, 'dashboard'); } else if (h === 'restaurant') { APP.mode = 'app'; APP.sf.main.user = 'r1'; go(APP.sf.main, 'rdash'); } else APP.mode = 'landing'; }
 
 /* ---------- events ---------- */
 const ACTIONS = {}; const FORMS = {}; const CHANGES = {};
@@ -189,7 +177,6 @@ document.addEventListener('change', e => { const el = e.target.closest('[data-ch
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { let any = false; Object.values(APP.sf).forEach(s => { if (s.modal) { s.modal = null; any = true; } }); if (any) renderAll(); } });
 window.addEventListener('storage', e => { if (e.key === 'quickbite-demo-v1') { C.reload(); renderAll(); } });
 window.addEventListener('hashchange', () => { fromHash(); renderAll(); });
-setInterval(() => { if (C.S.clock.mode === 'real') renderAll(); }, 60000);
 
 Object.assign(ACTIONS, {
   go: (sf, d) => { go(sf, d.r, d.id ? { id: d.id } : {}); if (d.r === 'marketplace' && !d.keepq) sf.q = d.q || ''; },
@@ -200,14 +187,10 @@ Object.assign(ACTIONS, {
   account: sf => { sf.modal = { type: 'account' }; },
   signout: sf => { sf.modal = null; APP.mode = 'landing'; setHash(); },
   mode: (sf, d) => { APP.mode = d.m; if (d.m === 'app' && d.u) { APP.sf.main.user = d.u; go(APP.sf.main, d.u.startsWith('s') ? 'dashboard' : 'rdash'); } setHash(); window.scrollTo(0, 0); },
-  dbt: () => { APP.dbOpen = !APP.dbOpen; },
   theme: () => { applyTheme(curTheme() === 'dark' ? 'light' : 'dark'); },
-  adv: (sf, d) => C.advance(Number(d.n)),
-  clock: (sf, d) => C.setClock({ mode: d.m }),
   reset: () => { C.reset(); Object.values(APP.sf).forEach(s => { s.modal = null; s.p = {}; }); toast(APP.sf.main, 'Sample data reset'); },
 });
 Object.assign(FORMS, { search: (sf, d) => { sf.q = (d.q || '').trim(); go(sf, isStu(sf) ? 'marketplace' : 'rmenu'); } });
 Object.assign(CHANGES, {
-  who: (sf, v) => { APP.sf.main.user = v; go(APP.sf.main, v.startsWith('s') ? 'dashboard' : 'rdash'); APP.sf.main.outlet = null; setHash(); },
   outlet: (sf, v) => { sf.outlet = v; },
 });

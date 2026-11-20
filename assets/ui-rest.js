@@ -1,6 +1,6 @@
 /* ---------- restaurant views ---------- */
 function rHead(sf, title, sub) { const o = C.outlet(curOutlet(sf)); const m = C.membership(sf.user, o.id); return '<div class="row between"><div><h1 style="margin:0">' + title + '</h1><p class="muted">' + esc(o.name) + ' · ' + (m.role === 'owner' ? 'Owner' : 'Staff') + (sub ? ' · ' + sub : '') + '</p></div></div>'; }
-function bars(data, valKey, labKey, fmt) { const mx = Math.max(1, ...data.map(d => d[valKey])); return '<div class="bars" role="img" aria-label="Bar chart">' + data.map(d => '<div><span class="num">' + fmt(d[valKey]) + '</span><b style="height:' + (d[valKey] / mx * 100) + '%' + (d.old ? ';opacity:.4' : '') + '"></b><span class="muted">' + esc(d[labKey]) + '</span></div>').join('') + '</div>'; }
+function bars(data, valKey, labKey, fmt) { const mx = Math.max(1, ...data.map(d => d[valKey])); return '<div class="bars" role="img" aria-label="Bar chart">' + data.map(d => '<div><span class="num">' + fmt(d[valKey]) + '</span><b style="height:' + (d[valKey] / mx * 100) + '%"></b><span class="muted">' + esc(d[labKey]) + '</span></div>').join('') + '</div>'; }
 function ocard(sf, o) {
   const it = o.lines.map(l => '<div>' + l.qty + '× ' + esc(l.name) + (l.note ? ' <i class="muted">“' + esc(l.note) + '”</i>' : '') + '</div>').join('');
   const late = ['accepted', 'preparing'].includes(o.status) && C.now() > o.readyBy;
@@ -9,7 +9,7 @@ function ocard(sf, o) {
   if (o.status === 'accepted') act = '<button class="btn sm p" data-a="tr" data-id="' + o.id + '" data-s="preparing">Start preparing</button><button class="btn sm" data-a="delay" data-id="' + o.id + '">+5 min</button>';
   if (o.status === 'preparing') act = '<button class="btn sm p" data-a="tr" data-id="' + o.id + '" data-s="ready">Mark ready</button><button class="btn sm" data-a="delay" data-id="' + o.id + '">+5 min</button>';
   if (o.status === 'ready') { const comp = o.compartmentId && C.S.compartments.find(c => c.id === o.compartmentId); const placed = comp && comp.state === 'occupied';
-    act = o.method === 'station' ? (placed ? '<span class="small">In compartment ' + comp.n + ' — awaiting student</span>' : '<button class="btn sm p" data-a="place" data-id="' + o.id + '">Place in compartment ' + (comp ? comp.n : '') + '</button><button class="btn sm" data-a="toCounter" data-id="' + o.id + '">Switch to counter</button>') + '<button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'
+    act = o.method === 'station' ? (placed ? '<span class="small">In compartment ' + comp.n + ' — awaiting student</span>' : '<button class="btn sm p" data-a="placeComp" data-id="' + o.id + '">Place in compartment ' + (comp ? comp.n : '') + '</button><button class="btn sm" data-a="toCounter" data-id="' + o.id + '">Switch to counter</button>') + '<button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'
       : '<button class="btn sm p" data-a="verifyAsk" data-id="' + o.id + '">Verify code & hand over</button><button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'; }
   return '<div class="ocard"><div class="row between"><span class="oav">' + esc(o.studentName.charAt(0)) + '</span><span class="id" style="flex:1">' + o.id + '</span><span class="chip ' + (late ? 'r' : 'n') + '">' + o.slot + '</span></div><div class="small muted">' + esc(o.studentName) + ' · ' + (o.method === 'station' ? 'Station: ' + esc(C.S.stations.find(s => s.id === o.stationId).name) : 'Counter') + ' · ' + ago(o.createdAt) + '</div><div style="margin:6px 0">' + it + '</div>' +
     (o.allergyNote && o.allergyNote.length ? '<div class="warn small" style="padding:4px 8px">' + o.allergyNote.map(esc).join('<br>') + '</div>' : '') + (o.reusable ? '<div class="small"><span class="chip g">Reusable container</span></div>' : '') +
@@ -166,19 +166,6 @@ const RES_VIEWS = {
 const RES_MODALS = {
   reject(sf, m) { return '<h2>Reject ' + m.id + '</h2><form data-form="reject" data-id="' + m.id + '"><label class="f" for="rj-' + sf.id + '">Reason shown to student</label><select id="rj-' + sf.id + '" name="reason"><option>Item unavailable</option><option>Kitchen at capacity</option><option>Closing soon</option><option>Other</option></select><div class="row" style="margin-top:10px"><button class="btn d">Reject order</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
   verify(sf, m) { return '<h2>Hand over ' + m.id + '</h2><form data-form="verify" data-id="' + m.id + '"><label class="f" for="vc-' + sf.id + '">Student’s collection code</label><input type="text" id="vc-' + sf.id + '" name="code" autocomplete="off" required placeholder="6-character code"><p class="small muted">Enter the code shown on the student’s screen.</p><div class="row"><button class="btn p">Verify & complete</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
-  item(sf, m) {
-    const i = m.id ? C.item(m.id) : { name: '', price: '', prep: 5, desc: '', cat: 'bowl', tags: [], allergens: null, ingredients: '', nutrition: null, stock: null, status: 'available' };
-    return '<div class="row between"><h2>' + (m.id ? 'Edit item' : 'New item') + '</h2><button class="btn sm" data-a="close">Close</button></div><form data-form="item" data-id="' + (m.id || '') + '">' +
-      '<label class="f" for="in-' + sf.id + '">Name</label><input type="text" id="in-' + sf.id + '" name="name" required value="' + esc(i.name) + '">' +
-      '<label class="f" for="id-' + sf.id + '">Description</label><textarea id="id-' + sf.id + '" name="desc">' + esc(i.desc) + '</textarea>' +
-      '<div class="grid g3" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><label class="f" for="ip-' + sf.id + '">Price (AED)</label><input type="number" step="0.5" min="0.5" max="' + C.MAX_PRICE + '" id="ip-' + sf.id + '" name="price" required value="' + esc(i.price) + '"></div><div><label class="f" for="it-' + sf.id + '">Prep (min)</label><input type="number" min="1" id="it-' + sf.id + '" name="prep" value="' + esc(i.prep) + '"></div><div><label class="f" for="is-' + sf.id + '">Stock</label><input type="number" min="0" id="is-' + sf.id + '" name="stock" placeholder="untracked" value="' + (i.stock == null ? '' : i.stock) + '"></div></div>' +
-      '<label class="f" for="ic-' + sf.id + '">Category</label><select id="ic-' + sf.id + '" name="cat">' + CATS.map(c => '<option value="' + c[0] + '"' + (i.cat === c[0] ? ' selected' : '') + '>' + c[1] + '</option>').join('') + '</select>' +
-      '<label class="f">Dietary tags</label><div class="chips">' + C.PREFS.map(t => '<label class="cb"><input type="checkbox" name="tags" value="' + t + '"' + (i.tags.includes(t) ? ' checked' : '') + '>' + t + '</label>').join('') + '</div>' +
-      '<label class="cb" style="margin-top:12px"><input type="checkbox" name="declared" value="1"' + (i.allergens ? ' checked' : '') + '>I declare this item’s allergens (leave unticked if unknown)</label><div class="chips" style="margin-top:6px">' + C.ALLERGENS.map(a => '<label class="cb"><input type="checkbox" name="allergens" value="' + a + '"' + (i.allergens && i.allergens.includes(a) ? ' checked' : '') + '>' + a + '</label>').join('') + '</div>' +
-      '<label class="f" for="ig-' + sf.id + '">Declared ingredients</label><input type="text" id="ig-' + sf.id + '" name="ingredients" value="' + esc(i.ingredients || '') + '">' +
-      '<div class="grid g2" style="grid-template-columns:1fr 1fr"><div><label class="f" for="ik-' + sf.id + '">Calories (only if supplied)</label><input type="number" min="0" id="ik-' + sf.id + '" name="kcal" value="' + (i.nutrition ? i.nutrition.kcal : '') + '"></div><div><label class="f" for="ipr-' + sf.id + '">Protein g</label><input type="number" min="0" id="ipr-' + sf.id + '" name="protein" value="' + (i.nutrition ? i.nutrition.protein : '') + '"></div></div>' +
-      '<button class="btn p" style="margin-top:6px">Save item</button></form>';
-  },
 };
 Object.assign(ACTIONS, {
   fcDay: (sf, d) => { sf.fcDay = Number(d.n); },
@@ -188,20 +175,17 @@ Object.assign(ACTIONS, {
   rejectAsk: (sf, d) => { sf.modal = { type: 'reject', id: d.id }; },
   verifyAsk: (sf, d) => { sf.modal = { type: 'verify', id: d.id }; },
   delay: (sf, d) => run(sf, () => C.delayOrder(sf.user, d.id, 5), 'Student notified of 5-min delay'),
-  place: (sf, d) => { if (!isStu(sf)) run(sf, () => C.placeInCompartment(sf.user, d.id), 'Placed — student notified'); else ACTIONS.placeOrder(sf, d); },
+  placeComp: (sf, d) => run(sf, () => C.placeInCompartment(sf.user, d.id), 'Placed — student notified'),
   toCounter: (sf, d) => run(sf, () => C.switchToCounter(sf.user, d.id), 'Switched to counter pickup'),
   pause: sf => { const o = C.outlet(curOutlet(sf)); run(sf, () => C.setOutlet(sf.user, o.id, { status: o.status === 'paused' ? 'open' : 'paused' })); },
   oStatus: (sf, d) => run(sf, () => C.setOutlet(sf.user, curOutlet(sf), { status: d.s }), 'Outlet status updated'),
   itemTag: (sf, d) => { const it = C.item(d.id); const tags = it.tags.includes(d.t) ? it.tags.filter(x => x !== d.t) : it.tags.concat(d.t); run(sf, () => C.setItemTags(sf.user, d.id, tags)); },
   wWeek: (sf, d) => { sf.wWeek = d.w; },
   addItem: sf => { sf.newItem = { cat: 'bowl', prep: 5 }; }, cancelNewItem: sf => { sf.newItem = null; },
-  editItem: (sf, d) => { sf.modal = { type: 'item', id: d.id || null }; },
   days: (sf, d) => { sf.days = Number(d.n); },
   report: (sf, d) => run(sf, () => C.reportReview(sf.user, d.id), 'Reported'),
   ev: (sf, d) => run(sf, () => C.reviewEvidence(sf.user, d.id, d.s), 'Evidence ' + d.s),
 });
-// student "place" (checkout) and restaurant "place" (compartment) share a name — route by role
-ACTIONS.placeOrder = STU_PLACE; function STU_PLACE(sf) { const co = sf.co; const o = run(sf, () => C.placeOrder(sf.user, { method: co.method, stationId: co.stationId, slot: co.slot, idemKey: co.fail ? null : co.idem, ackWarnings: co.ack, reusable: co.reusable, simulatePaymentFail: co.fail })); if (o) { sf.co = null; go(sf, 'order', { id: o.id }); toast(sf, 'Order ' + o.id + ' sent'); } }
 Object.assign(FORMS, {
   reject: (sf, d, el) => { if (run(sf, () => C.transition(sf.user, el.dataset.id, 'rejected', d.reason), 'Order rejected')) sf.modal = null; },
   verify: (sf, d, el) => { if (run(sf, () => C.verifyCollection(sf.user, el.dataset.id, d.code), 'Handed over — order complete')) sf.modal = null; },
@@ -212,7 +196,6 @@ Object.assign(FORMS, {
     const r = run(sf, () => C.upsertItem(sf.user, curOutlet(sf), { id: null, name: d.name, desc: d.desc, price: d.price, prep: d.prep, stock: d.stock === '' || d.stock == null ? undefined : d.stock, cat: d.cat, photo: d.photo, tags: [].concat(d.tags || []), allergensDeclared: !d.unknown, allergens: [].concat(d.allergens || []) }), 'Dish added to the menu');
     if (r) sf.newItem = null;
   },
-  item: (sf, d, el) => { const r = run(sf, () => C.upsertItem(sf.user, curOutlet(sf), { id: el.dataset.id || null, name: d.name, desc: d.desc, price: d.price, prep: d.prep, stock: d.stock, cat: d.cat, tags: [].concat(d.tags || []), allergensDeclared: !!d.declared, allergens: [].concat(d.allergens || []), ingredients: d.ingredients, kcal: d.kcal, protein: d.protein }), 'Item saved'); if (r) sf.modal = null; },
   waste: (sf, d) => run(sf, () => C.addWaste(sf.user, curOutlet(sf), d.kg, d.note), 'Waste recorded'),
   baseline: (sf, d) => run(sf, () => C.setBaseline(sf.user, curOutlet(sf), d.kg), 'Baseline saved'),
   reply: (sf, d, el) => run(sf, () => C.replyReview(sf.user, el.dataset.id, d.text), 'Reply posted'),
