@@ -457,3 +457,47 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .opay.ok{background:light-dark(#dcfce7,#14351f);color:var(--green)}
 .opay.un{background:light-dark(#fef3c7,#352b0c);color:var(--amber)}
 .opay .btn{min-height:30px;padding:0 10px;font-size:12px}
+/* QuickBite Premium */
+:root{--gold:light-dark(#b45309,#fbbf24);--goldsoft:light-dark(#fef3c7,#2f250c);--goldline:light-dark(#fcd34d,#5a4613)}
+.phead{display:flex;align-items:center;gap:14px;margin-bottom:.4em}.phead h1{margin:0}
+.premb{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;border-radius:99px;border:1.5px solid var(--goldline);background:var(--goldsoft);color:var(--gold);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+.premb svg{width:18px;height:18px}.premb:hover{border-color:var(--gold)}
+.premb.on{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:#d97706;color:#fff}
+.premchip{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--goldline);background:var(--goldsoft);color:var(--gold);font:inherit;font-weight:800;cursor:pointer}.premchip svg{width:18px;height:18px}
+.pstar{font-size:13px}.pgold{color:var(--gold)}
+.plans{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;margin-top:6px}
+.plan-card{display:flex;flex-direction:column;gap:8px;padding:16px;border:1.5px solid var(--line);border-radius:16px;background:var(--card)}
+.plan-card b svg{width:18px;height:18px;vertical-align:-3px;margin-right:4px}
+.plan-card.prem{border-color:var(--goldline);background:linear-gradient(160deg,var(--goldsoft),var(--card) 55%)}
+.plan-card.prem b{color:var(--gold)}
+.plan-card.cur{box-shadow:inset 0 0 0 1.5px var(--teal)}.plan-card.prem.cur{box-shadow:inset 0 0 0 1.5px var(--gold)}
+.pprice{font-size:26px;font-weight:800}.pprice span{font-size:14px;font-weight:600;color:var(--muted)}
+.plan-card ul{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.plan-card li{display:flex;gap:8px;align-items:flex-start}.plan-card li svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--muted)}
+.plan-card.prem li svg{color:var(--gold)}
+.plan-card .btn{margin-top:auto}
+.chip.pg{background:var(--goldsoft);color:var(--gold)}
+.pfoot{margin:12px 0 0;text-align:center}
+.paybox{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+.paybox input[readonly]{background:var(--card);letter-spacing:.08em}
+.pdone{text-align:center;padding:10px 0}.pdone h2{margin-top:10px}
+.lk{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--goldsoft);color:var(--gold)}.lk svg{width:24px;height:24px}
+.lk.big{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}.lk.big svg{width:32px;height:32px}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.dchip{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);font:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink)}
+.dchip svg{width:13px;height:13px}
+.dchip[aria-pressed=true]{background:var(--sel);color:var(--selink);border-color:var(--sel)}
+.dchip[disabled]{opacity:.55;cursor:not-allowed}
+.upsell{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:8px 12px;border:1px dashed var(--goldline);border-radius:12px;background:var(--goldsoft);color:var(--gold);font:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left}
+.upsell svg{width:16px;height:16px;flex:none}
+.aitabs{margin:4px 0 12px}.aitabs svg{width:16px;height:16px;color:var(--gold)}.aitabs button[aria-pressed=true] svg{color:inherit}
+.lockcard{text-align:center;padding:28px 20px;border-color:var(--goldline);background:linear-gradient(160deg,var(--goldsoft),var(--card) 60%)}.lockcard h2{margin-top:10px}.lockcard p{max-width:46em;margin:6px auto 14px}
+.wbud b svg{width:16px;height:16px;vertical-align:-3px;margin-right:6px;color:var(--teal)}
+.wday{margin-top:16px}.wday h3{margin:0 0 8px}
+.wbrk{margin-bottom:10px}.wbrk.past{opacity:.6}
+.wtime{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.wnone{padding:10px 14px;border:1px dashed var(--line);border-radius:12px}
+.chip.pschd{background:var(--goldsoft);color:var(--gold)}.chip.pschd svg{width:12px;height:12px}
+@container (max-width:760px){.plans{grid-template-columns:minmax(0,1fr)}.phead{flex-wrap:wrap}}
+@media(max-width:600px){.plans{grid-template-columns:minmax(0,1fr)}}
+.plan-card .btn{white-space:nowrap;font-size:14px}.aitabs button{display:inline-flex;align-items:center;gap:6px}

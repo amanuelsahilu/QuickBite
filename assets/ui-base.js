@@ -6,6 +6,8 @@ const aed = n => n == null ? '—' : 'AED ' + Number(n).toFixed(2).replace(/\.0
 const pct = n => n == null ? '—' : n + '%';
 const timeOf = ts => C.hm(C.parts(ts).min);
 const dayTime = ts => { const p = C.parts(ts); return C.DAYS[p.day] + ' ' + C.hm(p.min); };
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = ts => { const d = new Date(ts + 4 * 3600000); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }; // campus-local date
 const ago = ts => { const m = Math.round((C.now() - ts) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m <= 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
 
 const I = {
@@ -32,6 +34,7 @@ const I = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
   card: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
   chev: '<path d="M9 6l6 6-6 6"/>',
+  crown: '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
   cart: '<path d="M3 4h2l2 12h11l2-8H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>',
@@ -116,6 +119,7 @@ function renderSurface(sf) {
   const top = '<header class="top">' +
     '<button class="brand hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + LOGO + '</button>' +
     '<form data-form="search" role="search">' + ic('search') + '<label class="sr" for="q-' + sf.id + '">Search</label><input type="search" id="q-' + sf.id + '" name="q" placeholder="' + (stu ? 'Search food or vendors' : 'Search your menu') + '" value="' + esc(sf.q || '') + '"></form>' +
+    (stu && C.premium(sf.user).active ? '<button class="premchip" data-a="plans" title="QuickBite Premium">' + ic('crown') + '<span>Premium</span></button>' : '') +
     (stu ? '<button class="pts" data-a="go" data-r="rewards" title="Green Points">' + ic('leaf') + '<span class="num">' + C.balance(sf.user) + '</span><span class="sr"> Green Points</span></button>' +
       '<button class="ib" data-a="go" data-r="cart" aria-label="Cart, ' + cartN + ' items">' + ic('cart') + (cartN ? '<span class="dot">' + cartN + '</span>' : '') + '</button>'
       : (mine.length > 1 ? '<label class="sr" for="os-' + sf.id + '">Outlet</label><select class="orsel" id="os-' + sf.id + '" data-ch="outlet">' + mine.map(o => '<option value="' + o.id + '"' + (o.id === curOutlet(sf) ? ' selected' : '') + '>' + esc(o.name) + '</option>').join('') + '</select>' : '<span class="orsel" style="display:inline-flex;align-items:center">' + esc(C.outlet(curOutlet(sf)).name) + '</span>')) +
@@ -125,7 +129,7 @@ function renderSurface(sf) {
     '</header>';
   const side = '<aside class="side" aria-label="' + (stu ? 'Student' : 'Restaurant') + ' navigation"><button class="brand wm hb" data-a="mode" data-m="landing" aria-label="QuickBite home" title="Back to home">' + WORDMARK + '</button>' +
     nav.map(n => '<button class="nav" data-a="go" data-r="' + n[0] + '"' + (sf.route === n[0] || (n[0] === 'marketplace' && sf.route === 'outlet') || (n[0] === 'orders' && sf.route === 'order') || (n[0] === 'profile' && sf.route === 'diet') ? ' aria-current="page"' : '') + '>' + ic(n[2]) + n[1] + '</button>').join('') +
-    '<div class="role">' + (stu ? '' : '<span class="rav">' + esc(u.name.charAt(0)) + '</span>') + '<div><b>' + esc(stu ? u.name : u.full) + '</b><br><span class="muted">' + (stu ? 'Student' : esc(mine.map(o => o.name).join(' · '))) + '</span></div></div></aside>';
+    '<div class="role">' + (stu ? '' : '<span class="rav">' + esc(u.name.charAt(0)) + '</span>') + '<div><b>' + esc(stu ? u.name : u.full) + (stu && C.premium(sf.user).active ? ' <span class="pstar" title="Premium">⭐</span>' : '') + '</b><br><span class="muted">' + (stu ? (C.premium(sf.user).active ? 'Student · Premium' : 'Student') : esc(mine.map(o => o.name).join(' · '))) + '</span></div></div></aside>';
   const mt = '<nav class="mtabs" aria-label="Primary">' + tabs.map(t => '<button data-a="' + (t[0] === 'more' ? 'more' : 'go') + '" data-r="' + t[0] + '"' + (sf.route === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[2]) + t[1] + '</button>').join('') + '</nav>';
   const modal = sf.modal ? '<div class="modal" data-a="closeBg" role="dialog" aria-modal="true"><div class="mbox">' + renderModal(sf) + '</div></div>' : '';
   const t = sf.toast ? '<div class="toast' + (sf.toast.e ? ' e' : '') + '" role="status">' + esc(sf.toast.msg) + '</div>' : '';

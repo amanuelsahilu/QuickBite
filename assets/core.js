@@ -5,6 +5,8 @@ function createCore(store) {
   const KEY = 'quickbite-demo-v1';
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const MAX_PRICE = 18; // no menu item may cost more than this
+  const PREMIUM_PRICE = 5; // QuickBite Premium, AED per teaching month
+  const PREMIUM_SHARE = 0.2; // share of each pickup slot held for Premium students
   const PICKUP_MIN = 3; // minutes to collect a ready order
   const HEAD_MAX_MIN = 5; // running late: walk to class shown as at most 5 min
   const TZ_OFFSET = 4 * 60; // campus-local time (Asia/Dubai, UTC+4)
@@ -40,6 +42,9 @@ function createCore(store) {
   function money(n) { return Math.round(n * 100) / 100; }
   function now() { return BASE + (S.clock.day * 1440 + S.clock.min - TZ_OFFSET) * 60000; }
   function parts(ts) { const m = Math.floor((ts - BASE) / 60000) + TZ_OFFSET; const dm = ((m % 10080) + 10080) % 10080; return { day: Math.floor(dm / 1440), min: dm % 1440 }; }
+  function dayOf(ts) { return Math.floor((ts - BASE + TZ_OFFSET * 60000) / 86400000); } // campus day number (0 = demo Monday)
+  function local(ts) { return new Date(ts + TZ_OFFSET * 60000); } // read with getUTC* to get campus-local date parts
+  function orderDay(o) { return o.pickupDay != null ? o.pickupDay : dayOf(o.createdAt); }
   function hm(min) { min = ((min % 1440) + 1440) % 1440; return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0'); }
   function toMin(s) { const [h, m] = s.split(':').map(Number); return h * 60 + m; }
   function user(id) { const u = S.users.find(u => u.id === id); if (!u) err('auth', 'Not signed in'); return u; }
@@ -70,7 +75,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 18, seq: 0,
+      demo: true, version: 19, seq: 0,
       clock: { day: 0, min: 11 * 60 + 35 },
       config: {
         timing: { eatBufferMin: 10, orderLeadMin: 2 },
@@ -123,8 +128,8 @@ function createCore(store) {
       compartments: [],
       greenStations: [{ id: 'gs1', name: 'Smart Green Station — SJA Cafeteria', building: 'sja', code: 'GS-SJA-01' }, { id: 'gs2', name: 'Smart Green Station — SJB Cafeteria', building: 'sjb', code: 'GS-SJB-01' }],
       profiles: {
-        s1: { prefs: ['Halal', 'High Protein'], allergies: ['Tree nuts'], budget: 35, breakLen: 30, favOutlets: ['cafe'], favItems: ['i-cafe-1'] },
-        s2: { prefs: ['Vegetarian'], allergies: [], budget: 25, breakLen: 20, favOutlets: [], favItems: [] },
+        s1: { prefs: ['Halal', 'High Protein'], allergies: ['Tree nuts'], budget: 35, breakLen: 30, favOutlets: ['cafe'], favItems: ['i-cafe-1'], isPremium: false, premiumSince: null, premiumRenewsOn: null },
+        s2: { prefs: ['Vegetarian'], allergies: [], budget: 25, breakLen: 20, favOutlets: [], favItems: [], isPremium: false, premiumSince: null, premiumRenewsOn: null },
       },
       schedules: {
         s1: [
@@ -138,7 +143,7 @@ function createCore(store) {
         ],
         s2: [{ id: 'c8', day: 0, name: 'Engineering Maths', start: '09:00', end: '10:30', building: 'eng' }, { id: 'c9', day: 0, name: 'Physics Lab', start: '11:00', end: '12:30', building: 'sci' }],
       },
-      carts: {}, orders: [], history: [], evidence: [], ledger: [], rewards: [], redemptions: [], reviews: [], notifications: [], waste: [], audit: [], idem: {},
+      carts: {}, orders: [], history: [], evidence: [], ledger: [], rewards: [], redemptions: [], premiumPayments: [], reviews: [], notifications: [], waste: [], audit: [], idem: {},
     };
     const I = (outletId, n, name, cat, price, prep, tags, allergens, extra) => s.items.push(Object.assign({
       id: 'i-' + outletId + '-' + n, outletId, name, cat, price, prep, tags, allergens, ingredients: null, nutrition: null, stock: null, status: 'available', desc: '',
@@ -236,7 +241,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 18) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 19) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -254,7 +259,7 @@ function createCore(store) {
     if (p.min < toMin(o.open) || p.min >= toMin(o.close) || p.day >= 5) return { open: false, label: p.day >= 5 ? 'Closed (weekend)' : 'Closed · opens ' + o.open, state: 'closed' };
     return { open: true, label: 'Open until ' + o.close, state: 'open' };
   }
-  function activeOrders(outletId) { return S.orders.filter(x => x.outletId === outletId && ['submitted', 'accepted', 'preparing'].includes(x.status)); }
+  function activeOrders(outletId) { return S.orders.filter(x => x.outletId === outletId && ['submitted', 'accepted', 'preparing'].includes(x.status) && orderDay(x) <= dayOf(now())); }
   function queueInfo(outletId) {
     const o = outlet(outletId); const st = outletOpen(o);
     const live = activeOrders(outletId);
@@ -358,6 +363,7 @@ function createCore(store) {
       return c;
     });
   }
+  function clearCart(actor) { return tx(() => { S.carts[actor] = { outletId: null, lines: [] }; }); }
   function updateLine(actor, itemId, qty, note) {
     return tx(() => {
       const c = cart(actor); const l = c.lines.find(l => l.itemId === itemId); if (!l) err('not_found', 'Not in cart');
@@ -369,14 +375,17 @@ function createCore(store) {
   }
   function strHash(t) { let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
   // orders booked into a pickup slot: real orders plus simulated bookings from other students (fixed per outlet and slot)
-  function slotUse(outletId, slot) { const o = outlet(outletId); return Math.min(o.capacityPerSlot, slotLoad(outletId, slot) + strHash(outletId + slot) % (o.capacityPerSlot + 2)); }
-  function slotLoad(outletId, slot) { return S.orders.filter(o => o.outletId === outletId && o.slot === slot && ACTIVE.includes(o.status)).length; }
+  function slotUse(outletId, slot, day) { const o = outlet(outletId); const today = dayOf(now()); const d = day == null ? today : day; return Math.min(o.capacityPerSlot, slotLoad(outletId, slot, d) + strHash(outletId + slot + (d === today ? '' : d)) % (o.capacityPerSlot + 2)); }
+  function slotLoad(outletId, slot, day) { const d = day == null ? dayOf(now()) : day; return S.orders.filter(o => o.outletId === outletId && o.slot === slot && ACTIVE.includes(o.status) && orderDay(o) === d).length; }
   function quote(actor, opts) {
     const c = cart(actor); opts = opts || {};
     const problems = [], warnings = [];
     if (!c.lines.length) return { empty: true, problems: ['Your cart is empty'], warnings, lines: [] };
-    const o = outlet(c.outletId); const st = outletOpen(o);
-    if (!st.open) problems.push(o.name + ' is ' + st.label.toLowerCase());
+    const o = outlet(c.outletId); const prem = premium(actor).active;
+    const ahead = Math.max(0, Math.min(6, Math.floor(Number(opts.day) || 0))); const pickupDay = dayOf(now()) + ahead; const pdow = ((pickupDay % 7) + 7) % 7;
+    if (ahead > 0 && !prem) problems.push('Ordering ahead is a Premium feature');
+    if (ahead === 0) { const st = outletOpen(o); if (!st.open) problems.push(o.name + ' is ' + st.label.toLowerCase()); }
+    else if (pdow >= 5) problems.push(o.name + ' is closed on ' + DAYS[pdow]);
     const lines = c.lines.map(l => {
       const it = item(l.itemId); const price = it.price;
       if (!ORDERABLE.includes(it.status)) problems.push(it.name + ' is now ' + (it.status === 'soldout' ? 'sold out' : it.status));
@@ -388,15 +397,18 @@ function createCore(store) {
     const q = queueInfo(o.id); const prepMin = Math.max(...lines.map(l => l.prep)) + Math.max(0, lines.reduce((a, l) => a + l.qty, 0) - 1);
     const readyIn = S.config.timing.orderLeadMin + PICKUP_MIN; // same 5-minute estimate the food cards show (order + pick up)
     const slotLen = S.config.slotMinutes; const p = parts(now());
-    const first = Math.ceil((p.min + readyIn) / slotLen) * slotLen;
+    // today: the next few slots; another day: the outlet's slots from opening time
+    const first = ahead ? Math.ceil(toMin(o.open) / slotLen) * slotLen : Math.ceil((p.min + readyIn) / slotLen) * slotLen;
+    const nSlots = ahead ? 96 : 3 + strHash(o.id) % 5; // another day: every slot until closing; today: each outlet opens a different number of upcoming slots
+    const cap = o.capacityPerSlot, held = Math.ceil(cap * PREMIUM_SHARE);
     const slots = [];
-    // other students' bookings are simulated (fixed per outlet and slot) so availability varies;
-    // each outlet also opens a different number of upcoming slots
-    const nSlots = 3 + strHash(o.id) % 5;
     for (let m = first; m < Math.min(toMin(o.close), first + slotLen * nSlots); m += slotLen) {
-      const used = slotUse(o.id, hm(m)); slots.push({ slot: hm(m), used, cap: o.capacityPerSlot, full: used >= o.capacityPerSlot });
+      // Premium places are held until 10 min before the slot's order cut-off (cut-off = ready time before the slot)
+      const hold = ahead > 0 || p.min < m - readyIn - 10; const openCap = hold ? cap - held : cap;
+      const used = slotUse(o.id, hm(m), pickupDay); const mine = prem ? cap : openCap;
+      slots.push({ slot: hm(m), used, cap, left: Math.max(0, mine - used), full: used >= mine, premiumOnly: !prem && hold && used >= openCap && used < cap, priority: prem && hold && used >= openCap && used < cap });
     }
-    if (slots.length && slots.every(x => x.full)) { const l = slots[slots.length - 1]; l.used = l.cap - 1; l.full = false; }
+    if (slots.length && slots.every(x => x.full && !x.premiumOnly)) { const l = slots[slots.length - 1]; l.used = l.cap - 1; l.left = 1; l.full = false; l.premiumOnly = false; }
     const method = opts.method || 'counter';
     let station = null;
     if (method === 'station') {
@@ -407,11 +419,12 @@ function createCore(store) {
     }
     const pay = opts.pay === 'counter' ? 'counter' : 'card';
     if (pay === 'counter' && method === 'station') problems.push('Pickup station orders are paid in the app');
-    const slot = opts.slot || (slots.find(s => !s.full) || {}).slot;
+    const slot = opts.slot && slots.some(s => s.slot === opts.slot) ? opts.slot : (slots.find(s => !s.full) || {}).slot;
     const sl = slots.find(s => s.slot === slot);
-    if (!sl) problems.push('No collection slot available today');
+    if (!sl) problems.push('No collection slot available ' + (ahead ? 'that day' : 'today'));
+    else if (sl.premiumOnly) problems.push('Slot ' + slot + ' is full — Premium members can still book this slot');
     else if (sl.full) problems.push('Slot ' + slot + ' is full');
-    return { outlet: o, lines, subtotal, total: subtotal, prepMin, readyIn, slots, slot, method, pay, station, problems, warnings };
+    return { outlet: o, lines, subtotal, total: subtotal, prepMin, readyIn, slots, slot, method, pay, station, problems, warnings, ahead, pickupDay };
   }
   function placeOrder(actor, opts) {
     opts = opts || {};
@@ -429,16 +442,16 @@ function createCore(store) {
       const id = 'QB-' + (1000 + S.orders.length + 1); if (comp) comp.orderId = id;
       const order = {
         id, studentId: actor, studentName: st.name, outletId: q.outlet.id, lines: q.lines, subtotal: q.subtotal, total: q.total,
-        method: q.method, stationId: q.station && q.station.id, compartmentId: comp && comp.id, slot: q.slot, prepMin: q.prepMin,
+        method: q.method, stationId: q.station && q.station.id, compartmentId: comp && comp.id, slot: q.slot, pickupDay: q.pickupDay, prepMin: q.prepMin,
         status: 'submitted', payMethod: q.pay, payment: q.pay === 'counter' ? 'unpaid' : 'sim_authorised', events: [{ s: 'submitted', at: now(), by: actor }], createdAt: now(),
-        readyBy: now() + q.readyIn * 60000, token: Math.random().toString(36).slice(2, 8).toUpperCase(), tokenUsed: false,
+        readyBy: q.ahead ? BASE + (q.pickupDay * 1440 + toMin(q.slot) - TZ_OFFSET) * 60000 : now() + q.readyIn * 60000, token: Math.random().toString(36).slice(2, 8).toUpperCase(), tokenUsed: false,
         reusable: !!opts.reusable, allergyNote: q.warnings.length ? q.warnings : [], delay: 0, reviewed: false,
       };
       S.orders.unshift(order);
       if (opts.idemKey) S.idem[opts.idemKey] = id;
       S.carts[actor] = { outletId: null, lines: [] };
-      notify(actor, 'Order ' + id + ' sent to ' + q.outlet.name, 'order:' + id);
-      notifyOutlet(q.outlet.id, 'New order ' + id + ' for ' + q.slot, 'orders');
+      notify(actor, q.ahead ? 'Order ' + id + ' scheduled for ' + DAYS[((q.pickupDay % 7) + 7) % 7] + ' ' + q.slot + ' at ' + q.outlet.name : 'Order ' + id + ' sent to ' + q.outlet.name, 'order:' + id);
+      if (!q.ahead) notifyOutlet(q.outlet.id, 'New order ' + id + ' for ' + q.slot, 'orders');
       audit(actor, 'order_submitted', id);
       return order;
     });
@@ -451,7 +464,7 @@ function createCore(store) {
     err('forbidden', 'You cannot view this order');
   }
   function redact(o) { const c = Object.assign({}, o); delete c.token; c.studentName = o.studentName; return c; }
-  function outletOrders(actor, outletId) { requireOutlet(actor, outletId); return S.orders.filter(o => o.outletId === outletId).map(redact); }
+  function outletOrders(actor, outletId) { requireOutlet(actor, outletId); return S.orders.filter(o => o.outletId === outletId && orderDay(o) <= dayOf(now())).map(redact); } // scheduled orders arrive on their pickup day
 
   function releaseCompartment(o) { if (o.compartmentId) { const c = S.compartments.find(c => c.id === o.compartmentId); if (c && c.orderId === o.id) { c.state = 'free'; c.orderId = null; } } }
   function restock(o) { o.lines.forEach(l => { const it = S.items.find(i => i.id === l.itemId); if (it && it.stock != null) { it.stock += l.qty; if (it.status === 'soldout') it.status = 'available'; } }); }
@@ -567,6 +580,65 @@ function createCore(store) {
       const it = item(itemId); requireOutlet(actor, it.outletId);
       it.tags = PREFS.filter(t => tags.includes(t)); audit(actor, 'item_tags', it.id); return it;
     });
+  }
+
+  // ---------- QuickBite Premium (AED 5 / teaching month, card only, no free trial) ----------
+  function isSummer(ts) { const m = local(ts).getUTCMonth(); return m >= 5 && m <= 7; } // Jun–Aug: paused, no charge
+  function monthEnd(ts) { const d = local(ts); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) - TZ_OFFSET * 60000; } // first moment of next month
+  function nextBilling(ts) { const d = local(ts); let y = d.getUTCFullYear(), m = d.getUTCMonth() + 1; if (m > 11) { m = 0; y++; } if (m >= 5 && m <= 7) m = 8; return Date.UTC(y, m, 1) - TZ_OFFSET * 60000; }
+  function premium(actor) {
+    const p = S.profiles[actor] || {};
+    if (!p.isPremium) return { state: 'free', active: false };
+    if (isSummer(now())) return { state: 'paused', active: false, renews: p.premiumRenewsOn, since: p.premiumSince };
+    if (p.premiumCancelled) return now() < p.premiumUntil ? { state: 'cancelled', active: true, until: p.premiumUntil, since: p.premiumSince } : { state: 'free', active: false };
+    return { state: 'active', active: true, until: monthEnd(now()), renews: p.premiumRenewsOn, since: p.premiumSince };
+  }
+  function subscribePremium(actor) {
+    return tx(() => {
+      requireStudent(actor); const p = S.profiles[actor];
+      if (premium(actor).state === 'active') err('state', 'You already have Premium');
+      if (isSummer(now())) err('state', 'Premium is paused in summer — you can join from September');
+      (S.premiumPayments || (S.premiumPayments = [])).push({ userId: actor, amount: PREMIUM_PRICE, at: now(), method: 'card' }); // simulated card payment
+      Object.assign(p, { isPremium: true, premiumSince: p.premiumCancelled && now() < p.premiumUntil ? p.premiumSince : now(), premiumRenewsOn: nextBilling(now()), premiumCancelled: false, premiumUntil: null });
+      notify(actor, 'Welcome to QuickBite Premium ⭐ Priority pickup slots, your weekly break planner and ordering 7 days ahead are now on.', 'profile');
+      planReminders(actor); return premium(actor);
+    });
+  }
+  function cancelPremium(actor) {
+    return tx(() => {
+      requireStudent(actor); const p = S.profiles[actor];
+      if (premium(actor).state !== 'active') err('state', 'Premium is not active');
+      p.premiumCancelled = true; p.premiumUntil = monthEnd(now());
+      notify(actor, 'Premium cancelled. Your perks stay on until the end of this month.', 'profile'); return premium(actor);
+    });
+  }
+  // weekly break planner: a meal and pickup slot for every break Monday–Friday (Premium)
+  function weekPlan(actor) {
+    requireStudent(actor); const prof = S.profiles[actor]; const sched = S.schedules[actor] || [];
+    const today = dayOf(now()), tdow = parts(now()).day, nowMin = parts(now()).min; const usedItems = []; const days = [];
+    for (let dow = 0; dow < 5; dow++) {
+      const off = (dow - tdow + 7) % 7; const cls = sched.filter(c => c.day === dow).sort((a, b) => toMin(a.start) - toMin(b.start)); const breaks = [];
+      for (let i = 0; i + 1 < cls.length; i++) {
+        const from = toMin(cls[i].end), to = toMin(cls[i + 1].start); if (to - from < 15) continue;
+        const start = off === 0 ? Math.max(from, nowMin) : from; // today: can't pick up in the past
+        const pick = Math.ceil((start + 5) / 15) * 15; const passed = pick > to - 10;
+        const options = S.items.filter(it => { const o = outlet(it.outletId); const d = dietCheck(actor, it);
+          return ORDERABLE.includes(it.status) && it.stock !== 0 && !d.block.length && !d.unknown && (!prof.budget || it.price <= prof.budget) && o.status !== 'closed' && pick >= toMin(o.open) && pick < toMin(o.close); })
+          .map(it => { const o = outlet(it.outletId); const d = dietCheck(actor, it); return { it, o, score: d.goals.length * 12 + (prof.favItems.includes(it.id) ? 8 : 0) + (prof.favOutlets.includes(o.id) ? 5 : 0) - it.price * 0.3 + Math.min(10, popularity(it.id) / 8) + ((o.reusable ? 1 : 0) + (it.tags.includes('Vegan') ? 1 : 0)) * 2 }; })
+          .sort((a, b) => b.score - a.score);
+        const choice = options.find(x => !usedItems.includes(x.it.id)) || options[0];
+        if (choice) usedItems.push(choice.it.id);
+        breaks.push({ from: cls[i].end, to: cls[i + 1].start, len: to - from, slot: hm(pick), passed, ahead: off, nextClass: cls[i + 1].name, item: choice && choice.it, outlet: choice && choice.o });
+      }
+      days.push({ dow, ahead: off, day: today + off, breaks });
+    }
+    const planned = days.flatMap(d => d.breaks).filter(b => b.item && !b.passed);
+    return { days, total: money(planned.reduce((a, b) => a + b.item.price, 0)), meals: planned.length, budget: (prof.budget || 35) * 5 };
+  }
+  // reminders before each of today's planned breaks (Premium only)
+  function planReminders(actor) {
+    if (!premium(actor).active) return;
+    weekPlan(actor).days.filter(d => d.ahead === 0).forEach(d => d.breaks.filter(b => !b.passed && b.item).forEach(b => notify(actor, 'Order now for your ' + b.slot + ' pickup — ' + (parts(now()).min >= toMin(b.from) ? 'your break ends at ' + b.to : 'your break starts at ' + b.from) + '.', 'ai')));
   }
 
   // ---------- points, evidence, rewards ----------
@@ -740,8 +812,8 @@ function createCore(store) {
   return {
     DAYS, PREFS, ALLERGENS, GREEN_TYPES,
     get S() { return S; }, reload() { load(); },
-    MAX_PRICE, PICKUP_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
-    cart, addToCart, updateLine, quote, placeOrder, myOrders, getOrder, outletOrders, transition, markPaid, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
+    MAX_PRICE, PICKUP_MIN, PREMIUM_PRICE, slotUse, dayOf, orderDay, premium, subscribePremium, cancelPremium, weekPlan, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
+    cart, addToCart, updateLine, clearCart, quote, placeOrder, myOrders, getOrder, outletOrders, transition, markPaid, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem, setItemStatus, setItemTags, ORDERABLE,
     balance, submitEvidence, reviewEvidence, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
