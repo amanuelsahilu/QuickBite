@@ -13,6 +13,7 @@ function ocard(sf, o) {
       : '<button class="btn sm p" data-a="verifyAsk" data-id="' + o.id + '">Verify code & hand over</button><button class="btn sm d" data-a="tr" data-id="' + o.id + '" data-s="no_show">No-show</button>'; }
   return '<div class="ocard"><div class="row between"><span class="oav">' + esc(o.studentName.charAt(0)) + '</span><span class="id" style="flex:1">' + o.id + '</span><span class="chip ' + (late ? 'r' : 'n') + '">' + o.slot + '</span></div><div class="small muted">' + esc(o.studentName) + ' · ' + (o.method === 'station' ? 'Station: ' + esc(C.S.stations.find(s => s.id === o.stationId).name) : 'Counter') + ' · ' + ago(o.createdAt) + '</div><div style="margin:6px 0">' + it + '</div>' +
     (o.allergyNote && o.allergyNote.length ? '<div class="warn small" style="padding:4px 8px">' + o.allergyNote.map(esc).join('<br>') + '</div>' : '') + (o.reusable ? '<div class="small"><span class="chip g">Reusable container</span></div>' : '') +
+    '<div class="opay ' + (o.payment === 'unpaid' ? 'un' : 'ok') + '"><span>' + ic(o.payment === 'unpaid' ? 'store' : 'card') + (o.payment === 'unpaid' ? 'Not yet paid · AED ' + o.total : 'Paid') + '</span>' + (o.payment === 'unpaid' ? '<button class="btn sm" data-a="markPaid" data-id="' + o.id + '">Mark as paid</button>' : '') + '</div>' +
     '<div class="small oexp">' + ic('clock') + '<span>Expected ' + timeOf(o.readyBy) + (o.delay ? ' (+' + o.delay + ')' : '') + (late ? ' · <b style="color:var(--red)">overdue</b>' : '') + '</span></div><div class="oact">' + act + '</div></div>';
 }
 // blank dish card for adding a new menu item (inline, shaped like the other dish cards)
@@ -165,7 +166,7 @@ const RES_VIEWS = {
 };
 const RES_MODALS = {
   reject(sf, m) { return '<h2>Reject ' + m.id + '</h2><form data-form="reject" data-id="' + m.id + '"><label class="f" for="rj-' + sf.id + '">Reason shown to student</label><select id="rj-' + sf.id + '" name="reason"><option>Item unavailable</option><option>Kitchen at capacity</option><option>Closing soon</option><option>Other</option></select><div class="row" style="margin-top:10px"><button class="btn d">Reject order</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
-  verify(sf, m) { return '<h2>Hand over ' + m.id + '</h2><form data-form="verify" data-id="' + m.id + '"><label class="f" for="vc-' + sf.id + '">Student’s collection code</label><input type="text" id="vc-' + sf.id + '" name="code" autocomplete="off" required placeholder="6-character code"><p class="small muted">Enter the code shown on the student’s screen.</p><div class="row"><button class="btn p">Verify & complete</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
+  verify(sf, m) { const o = C.S.orders.find(x => x.id === m.id); return '<h2>Hand over ' + m.id + '</h2>' + (o && o.payment === 'unpaid' ? '<div class="warn" style="margin-bottom:10px">Not yet paid: take <b>' + aed(o.total) + '</b> before handing over. Completing the hand-over marks it paid.</div>' : '') + '<form data-form="verify" data-id="' + m.id + '"><label class="f" for="vc-' + sf.id + '">Student’s collection code</label><input type="text" id="vc-' + sf.id + '" name="code" autocomplete="off" required placeholder="6-character code"><p class="small muted">Enter the code shown on the student’s screen.</p><div class="row"><button class="btn p">Verify & complete</button><button type="button" class="btn" data-a="close">Cancel</button></div></form>'; },
 };
 Object.assign(ACTIONS, {
   fcDay: (sf, d) => { sf.fcDay = Number(d.n); },
@@ -176,6 +177,7 @@ Object.assign(ACTIONS, {
   verifyAsk: (sf, d) => { sf.modal = { type: 'verify', id: d.id }; },
   delay: (sf, d) => run(sf, () => C.delayOrder(sf.user, d.id, 5), 'Student notified of 5-min delay'),
   placeComp: (sf, d) => run(sf, () => C.placeInCompartment(sf.user, d.id), 'Placed — student notified'),
+  markPaid: (sf, d) => run(sf, () => C.markPaid(sf.user, d.id), d.id + ' marked as paid'),
   toCounter: (sf, d) => run(sf, () => C.switchToCounter(sf.user, d.id), 'Switched to counter pickup'),
   pause: sf => { const o = C.outlet(curOutlet(sf)); run(sf, () => C.setOutlet(sf.user, o.id, { status: o.status === 'paused' ? 'open' : 'paused' })); },
   oStatus: (sf, d) => run(sf, () => C.setOutlet(sf.user, curOutlet(sf), { status: d.s }), 'Outlet status updated'),

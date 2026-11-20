@@ -450,3 +450,10 @@ details>summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
 .lhero h1{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(38px,5.4vw,60px);line-height:1.02;letter-spacing:-.02em;font-variation-settings:'opsz' 96}
 .top{justify-content:flex-end}
 @container (max-width:760px){.top .brand{margin-right:auto}}
+.mtile .small{font-weight:500}.mtile[disabled]{opacity:.5;cursor:not-allowed}
+/* live orders: payment status */
+.opay{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:6px 0;padding:6px 8px;border-radius:10px;font-size:13px;font-weight:700}
+.opay>span{display:inline-flex;align-items:center;gap:6px}.opay svg{width:14px;height:14px;flex:none}
+.opay.ok{background:light-dark(#dcfce7,#14351f);color:var(--green)}
+.opay.un{background:light-dark(#fef3c7,#352b0c);color:var(--amber)}
+.opay .btn{min-height:30px;padding:0 10px;font-size:12px}

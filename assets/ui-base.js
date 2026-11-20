@@ -76,7 +76,7 @@ function pseudoQR(token) { // visual only — not a scannable QR code
 }
 const STATUS = { submitted: ['Submitted', 'n'], accepted: ['Accepted', 'g'], preparing: ['Preparing', 'a'], ready: ['Ready', 'g'], collected: ['Collected', 'n'], completed: ['Completed', ''], rejected: ['Rejected', 'r'], cancelled: ['Cancelled', 'r'], no_show: ['Not collected', 'r'] };
 const stChip = s => '<span class="chip ' + (STATUS[s] || ['', ''])[1] + '">' + esc((STATUS[s] || [s])[0]) + '</span>';
-const payChip = p => '<span class="chip x">' + esc({ sim_authorised: 'Payment held', sim_captured: 'Paid', sim_voided: 'Voided' }[p] || p) + '</span>';
+const payChip = p => '<span class="chip x">' + esc({ sim_authorised: 'Paid in app', sim_captured: 'Paid', sim_voided: 'Voided', unpaid: 'Pay at the counter' }[p] || p) + '</span>';
 const lvlChip = l => '<span class="chip ' + ({ short: 'g', moderate: 'y', busy: 'r', closed: 'x' }[l]) + '">' + ({ short: 'Not busy', moderate: 'Moderate', busy: 'Busy', closed: 'Closed' }[l]) + '</span>';
 function outletRating(id) { const S = C.S; const r = S.reviews.filter(x => x.outletId === id).map(x => x.rating).concat(S.history.filter(h => h.outletId === id && h.rating).map(h => h.rating)); return r.length ? { avg: Math.round(r.reduce((a, b) => a + b, 0) / r.length * 10) / 10, n: r.length } : null; }
 const stars = r => r ? '<span class="nowrap">' + '★ ' + r.avg + ' <span class="muted small">(' + r.n + ')</span></span>' : '<span class="muted small">No ratings yet</span>';

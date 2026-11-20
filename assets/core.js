@@ -70,7 +70,7 @@ function createCore(store) {
   // ---------- seed (demo data only) ----------
   function seed() {
     const s = {
-      demo: true, version: 17, seq: 0,
+      demo: true, version: 18, seq: 0,
       clock: { day: 0, min: 11 * 60 + 35 },
       config: {
         timing: { eatBufferMin: 10, orderLeadMin: 2 },
@@ -219,10 +219,10 @@ function createCore(store) {
         token: 'T' + n, tokenUsed: status === 'completed', reusable: false, allergyNote: [], delay: 0, reviewed: status === 'completed' };
     };
     s.orders.unshift(
-      today(989, 's3', 'Sara', 'i-cafe-2', 1, 'submitted', '11:33', '11:45'),
+      Object.assign(today(989, 's3', 'Sara', 'i-cafe-2', 1, 'submitted', '11:33', '11:45'), { payMethod: 'counter', payment: 'unpaid' }),
       today(988, 's4', 'Yousef', 'i-cafe-3', 1, 'accepted', '11:29', '12:00'),
       today(987, 's5', 'Mariam', 'i-cafe-4', 1, 'preparing', '11:24', '11:45'),
-      today(986, 's2', 'Omar', 'i-cafe-1', 1, 'ready', '11:18', '11:30'),
+      Object.assign(today(986, 's2', 'Omar', 'i-cafe-1', 1, 'ready', '11:18', '11:30'), { payMethod: 'counter', payment: 'unpaid' }),
       today(985, 's3', 'Sara', 'i-coffee-2', 1, 'submitted', '11:34', '11:45'),
       today(984, 's4', 'Yousef', 'i-coffee-1', 1, 'preparing', '11:28', '11:45'),
       today(983, 's5', 'Mariam', 'i-cafe-1', 1, 'completed', '09:10', '09:15'),
@@ -236,7 +236,7 @@ function createCore(store) {
   }
 
   function load() {
-    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 17) { S = p; return; } } } catch (e) { }
+    try { const raw = store && store.getItem(KEY); if (raw) { const p = JSON.parse(raw); if (p && p.demo && p.version === 18) { S = p; return; } } } catch (e) { }
     S = seed();
   }
 
@@ -405,11 +405,13 @@ function createCore(store) {
       else if (station.state !== 'operational') problems.push(station.name + ' is ' + station.state);
       else if (!S.compartments.some(x => x.stationId === station.id && x.state === 'free')) problems.push(station.name + ' is full');
     }
+    const pay = opts.pay === 'counter' ? 'counter' : 'card';
+    if (pay === 'counter' && method === 'station') problems.push('Pickup station orders are paid in the app');
     const slot = opts.slot || (slots.find(s => !s.full) || {}).slot;
     const sl = slots.find(s => s.slot === slot);
     if (!sl) problems.push('No collection slot available today');
     else if (sl.full) problems.push('Slot ' + slot + ' is full');
-    return { outlet: o, lines, subtotal, total: subtotal, prepMin, readyIn, slots, slot, method, station, problems, warnings };
+    return { outlet: o, lines, subtotal, total: subtotal, prepMin, readyIn, slots, slot, method, pay, station, problems, warnings };
   }
   function placeOrder(actor, opts) {
     opts = opts || {};
@@ -428,7 +430,7 @@ function createCore(store) {
       const order = {
         id, studentId: actor, studentName: st.name, outletId: q.outlet.id, lines: q.lines, subtotal: q.subtotal, total: q.total,
         method: q.method, stationId: q.station && q.station.id, compartmentId: comp && comp.id, slot: q.slot, prepMin: q.prepMin,
-        status: 'submitted', payment: 'sim_authorised', events: [{ s: 'submitted', at: now(), by: actor }], createdAt: now(),
+        status: 'submitted', payMethod: q.pay, payment: q.pay === 'counter' ? 'unpaid' : 'sim_authorised', events: [{ s: 'submitted', at: now(), by: actor }], createdAt: now(),
         readyBy: now() + q.readyIn * 60000, token: Math.random().toString(36).slice(2, 8).toUpperCase(), tokenUsed: false,
         reusable: !!opts.reusable, allergyNote: q.warnings.length ? q.warnings : [], delay: 0, reviewed: false,
       };
@@ -473,7 +475,7 @@ function createCore(store) {
         notify(o.studentId, o.id + ' was ' + to + (note ? ': ' + note : '') + '. Payment voided.', 'order:' + o.id);
         if (to === 'cancelled') notifyOutlet(o.outletId, o.id + ' cancelled by student', 'orders');
       }
-      if (to === 'no_show') { o.payment = 'sim_captured'; releaseCompartment(o); notify(o.studentId, o.id + ' was not collected.', 'order:' + o.id); }
+      if (to === 'no_show') { o.payment = o.payment === 'unpaid' ? 'sim_voided' : 'sim_captured'; releaseCompartment(o); notify(o.studentId, o.id + ' was not collected.', 'order:' + o.id); }
       if (to === 'collected') complete(o, actor);
       audit(actor, 'order_' + to, o.id);
       return o;
@@ -487,6 +489,15 @@ function createCore(store) {
     if (o.method === 'station') award(o.studentId, GREEN_TYPES.find(g => g.id === 'sustainable_pickup').pts, 'Sustainable Pickup (' + o.id + ')', 'sp:' + o.id, 'sustainable_pickup');
     if (o.reusable) S.evidence.unshift({ id: uid('ev'), userId: o.studentId, type: 'reusable', orderId: o.id, outletId: o.outletId, status: 'pending', at: now(), file: null, note: 'Declared at checkout — outlet to verify' });
     notify(o.studentId, o.id + ' collected. Enjoy! Rate your meal?', 'order:' + o.id);
+  }
+  // restaurant takes the money for a pay-at-the-counter order
+  function markPaid(actor, orderId) {
+    return tx(() => {
+      const o = S.orders.find(o => o.id === orderId); if (!o) err('not_found', 'Order not found'); requireOutlet(actor, o.outletId);
+      if (o.payment !== 'unpaid') err('state', 'This order is already paid');
+      o.payment = 'sim_captured'; o.events.push({ s: 'paid', at: now(), by: actor, note: 'Paid at the counter' });
+      notify(o.studentId, o.id + ': payment received at the counter.', 'order:' + o.id); return o;
+    });
   }
   function delayOrder(actor, orderId, minutes) {
     return tx(() => { const o = S.orders.find(o => o.id === orderId); if (!o) err('not_found', 'Order not found'); requireOutlet(actor, o.outletId); if (!['accepted', 'preparing'].includes(o.status)) err('state', 'Only accepted or preparing orders can be delayed'); o.delay += minutes; o.readyBy += minutes * 60000; o.events.push({ s: 'delayed', at: now(), by: actor, note: '+' + minutes + ' min' }); notify(o.studentId, o.id + ' delayed by ' + minutes + ' min. New estimate ' + hm(parts(o.readyBy).min), 'order:' + o.id); return o; });
@@ -730,7 +741,7 @@ function createCore(store) {
     DAYS, PREFS, ALLERGENS, GREEN_TYPES,
     get S() { return S; }, reload() { load(); },
     MAX_PRICE, PICKUP_MIN, slotUse, now, parts, hm, toMin, walk, bName, user, membership, outlet, item, outletOpen, queueInfo, nextBreak, overlaps, dietCheck, recommend,
-    cart, addToCart, updateLine, quote, placeOrder, myOrders, getOrder, outletOrders, transition, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
+    cart, addToCart, updateLine, quote, placeOrder, myOrders, getOrder, outletOrders, transition, markPaid, delayOrder, placeInCompartment, switchToCounter, verifyCollection, stationCollect,
     setOutlet, upsertItem, setItemStatus, setItemTags, ORDERABLE,
     balance, submitEvidence, reviewEvidence, redeem, badges, level,
     addReview, replyReview, reportReview, sales, forecast, wasteSummary, addWaste, setBaseline, sustainability,
